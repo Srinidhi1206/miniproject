@@ -93,9 +93,12 @@ def get_index() -> VectorIndex:
     return index
 
 
-def retrieve(query: str, evidence_codes: list[str], k: int = 4, tag_boost: float = 0.12) -> list[tuple[KnowledgeChunk, float]]:
+def retrieve(query: str, evidence_codes: list[str], k: int = 4, tag_boost: float = 0.12,
+             require_tag_match: bool = False) -> list[tuple[KnowledgeChunk, float]]:
     """Semantic search, re-ranked with a boost for chunks tagged with the found evidence codes.
 
+    With `require_tag_match`, only chunks from guides tagged with a found evidence
+    code are eligible (falls back to similarity when no guide matches).
     Sections that are lists of generic 'warning signs' / 'what to do' are
     down-weighted for explanations — the result page shows actions separately.
     """
@@ -108,6 +111,11 @@ def retrieve(query: str, evidence_codes: list[str], k: int = 4, tag_boost: float
         if chunk.section.lower().startswith(("warning signs", "what to do")):
             s -= 0.25
         rescored.append((chunk, s))
+    if require_tag_match and codes:
+        # Ground guidance in the evidence: only guides written about a found tactic,
+        # unless none match (then fall back to pure similarity).
+        tagged = [p for p in rescored if codes.intersection(p[0].tags)]
+        rescored = tagged or rescored
     rescored.sort(key=lambda p: -p[1])
     out: list[tuple[KnowledgeChunk, float]] = []
     per_doc: dict[str, int] = {}

@@ -32,10 +32,10 @@ export const INPUT_LABEL: Record<InputType, string> = {
 };
 
 export const STAGES: { id: Stage; label: string }[] = [
-  { id: "validate", label: "Analyzing input" },
+  { id: "validate", label: "Input received" },
   { id: "extract", label: "Extracting content" },
   { id: "analyze", label: "Checking suspicious indicators" },
-  { id: "risk", label: "Assessing risk" },
+  { id: "risk", label: "Running risk analysis" },
   { id: "explain", label: "Preparing explanation" },
 ];
 

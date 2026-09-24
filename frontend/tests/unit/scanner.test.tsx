@@ -13,7 +13,7 @@ describe("Scanner", () => {
     for (const name of ["Message", "Link", "Screenshot", "QR code"]) {
       expect(screen.getByRole("tab", { name: new RegExp(name) })).toBeInTheDocument();
     }
-    expect(screen.getByRole("tab", { name: /Voice/ })).toHaveTextContent(/Soon/i);
+    expect(screen.getByRole("tab", { name: /Voice/ })).toHaveTextContent(/Next phase/i);
   });
 
   it("validates an empty message without calling the API", () => {
@@ -26,7 +26,7 @@ describe("Scanner", () => {
 
   it("shows the voice capability notice instead of a fake analyser", () => {
     render(<Scanner initialMode="voice" />);
-    expect(screen.getByText(/isn't available in the current version/i)).toBeInTheDocument();
+    expect(screen.getByText(/coming in the next phase/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Analyze/ })).not.toBeInTheDocument();
   });
 

@@ -142,8 +142,9 @@ class AnalysisResult(BaseModel):
     risk_level: RiskLevel
     confidence: float = Field(ge=0, le=1, description="Confidence of the primary model in its own label.")
 
-    findings: list[Evidence]
-    reassurances: list[Evidence]
+    findings: list[Evidence] = Field(description="Warning signs.")
+    reassurances: list[Evidence] = Field(description="Signals that lower the risk.")
+    context: list[Evidence] = Field(default=[], description="Neutral facts, e.g. what a QR code contains. Not warnings.")
     recommendations: list[Recommendation]
     explanation: Explanation
     extracted: ExtractedContent

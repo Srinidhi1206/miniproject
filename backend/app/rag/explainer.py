@@ -33,42 +33,45 @@ SYSTEM_PROMPT = (
 )
 
 
-def _summary(level: RiskLevel, score: int, noun: str, components: list[ComponentScore], findings: list[Evidence]) -> str:
-    text_c = next((c for c in components if c.component == "text" and c.model), None)
-    url_cs = [c for c in components if c.component == "url"]
+def _plural(n: int, word: str) -> str:
+    return f"{n} {word}{'' if n == 1 else 's'}"
+
+
+def _summary(level: RiskLevel, noun: str, components: list[ComponentScore], findings: list[Evidence]) -> str:
+    """Plain-language verdict. No model percentages here — those live in the
+    technical details. Wording strength follows the risk level (false-positive UX)."""
+    warnings = [e for e in findings if e.weight > 0 or e.severity in ("high", "critical")]
+    n = len(warnings)
+    top = components[0] if components else None
     parts: list[str] = []
-    if level in (RiskLevel.HIGH, RiskLevel.CRITICAL):
-        parts.append(f"This {noun} shows strong signs of a scam ({score}/100).")
+    if level == RiskLevel.CRITICAL:
+        parts.append(f"This {noun} strongly matches known scam patterns. Treat it as a scam.")
+    elif level == RiskLevel.HIGH:
+        parts.append(f"This {noun} shows several patterns commonly used in scams. "
+                     "Don't click, pay or reply until you've verified it independently.")
     elif level == RiskLevel.MEDIUM:
-        parts.append(f"This {noun} has some warning signs ({score}/100). It may be genuine, but verify before acting.")
+        parts.append(f"We found {_plural(n, 'warning sign') if n else 'some warning signs'} in this {noun}. "
+                     "It may be genuine — verify it through an official channel before you act.")
     else:
-        parts.append(f"SENTINEL found no strong scam signals in this {noun} ({score}/100).")
-    if text_c and text_c.model:
-        pct = round(text_c.model.probability * 100)
-        parts.append(f"The text classifier rates its wording {pct}% similar to known scam messages.")
-    risky_urls = [c for c in url_cs if c.score >= 60]
-    if noun == "link":
-        pass  # the link IS the input; the opening sentence already covers it
-    elif risky_urls:
-        parts.append(f"{len(risky_urls)} link{'s' if len(risky_urls) > 1 else ''} in it look{'' if len(risky_urls) > 1 else 's'} dangerous.")
-    elif url_cs and all(c.score < 30 for c in url_cs):
-        parts.append("The link it contains did not show risky patterns.")
-    if findings:
-        n = len(findings)
-        parts.append(f"{n} warning sign{'s' if n != 1 else ''} {'were' if n != 1 else 'was'} identified.")
-    elif level == RiskLevel.LOW:
-        parts.append("That doesn't guarantee it's safe — stay alert to any request for money, codes or urgency.")
+        parts.append(f"SENTINEL didn't find warning signs in this {noun}. That doesn't guarantee it's safe — "
+                     "be careful if it later asks for money, codes or personal details.")
+
+    url_cs = [c for c in components if c.component == "url"]
+    if noun != "link" and any(c.score >= 60 for c in url_cs):
+        parts.append("It contains a link that looks dangerous.")
+    # A URL warning driven mostly by how the name LOOKS (little rule evidence) is less certain — say so.
+    if (level == RiskLevel.MEDIUM and top is not None and top.component == "url"
+            and top.rule_points <= 10 and top.model_points >= 30):
+        parts.append("This warning is based mainly on how the website name looks, so treat it as a caution rather than proof.")
     return " ".join(parts)
 
 
 def _query(findings: list[Evidence], input_type: InputType, channel: str | None) -> str:
     bits = [e.label for e in findings[:6]] + [e.detail or "" for e in findings[:3]]
     if input_type == InputType.QR:
-        bits.append("QR code scan payment")
+        bits.append("QR code")
     if channel == "job_offer":
         bits.append("job offer recruitment fee")
-    if not findings:
-        bits.append("how to recognise scams stay safe verify official channel")
     return " ".join(bits)
 
 
@@ -76,30 +79,22 @@ def explain(
     *, input_type: InputType, channel: str | None, level: RiskLevel, score: int,
     components: list[ComponentScore], findings: list[Evidence], reassurances: list[Evidence],
 ) -> Explanation:
-    codes = [e.code for e in findings + reassurances]
-    passages = retrieve(_query(findings, input_type, channel), codes, k=3 if findings else 2)
     noun = _INPUT_NOUN.get(input_type, "content")
-    summary = _summary(level, score, noun, components, findings)
+    summary = _summary(level, noun, components, findings)
 
-    # Template: pair each top finding with its own rule rationale, then add
-    # the retrieved guidance passages (deduplicated).
-    why: list[str] = []
-    for e in findings[:3]:
-        if e.detail:
-            why.append(f"{e.label}: {e.detail}")
     if not findings:
-        # Nothing suspicious: say what was checked instead of padding with unrelated guidance.
-        why.append("SENTINEL's rules found no specific scam tactics — no urgency, payment or fee requests, "
-                   "requests for OTPs/PINs, or risky links.")
+        # Nothing suspicious: say what was checked; don't pad with unrelated scam guidance.
+        why = ["SENTINEL checked for urgency, payment or fee requests, requests for OTPs or PINs, "
+               "impersonation and risky links, and found none of them."]
         why.extend(f"{e.label}. {e.detail}" if e.detail else e.label for e in reassurances[:2])
-        passages = passages[:1]
+        passages: list = []
+    else:
+        # "Why this matters" = retrieved guidance about the tactics that were found.
+        # The evidence itself (with its own rationale) is listed separately, so it isn't repeated here.
+        codes = [e.code for e in findings]
+        passages = retrieve(_query(findings, input_type, channel), codes, k=3, require_tag_match=True)
+        why = [chunk.lead for chunk, _ in passages if chunk.lead]
     sources = [SourceRef(slug=c.slug, title=c.title, section=c.section, score=s) for c, s in passages]
-    for chunk, _ in passages:
-        if len(why) >= 5:
-            break
-        lead = chunk.lead
-        if lead and lead not in why:
-            why.append(lead)
     explanation = Explanation(summary=summary, why_it_matters=why, sources=sources, generated_by="template+rag")
 
     llm = get_llm()

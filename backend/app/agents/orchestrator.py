@@ -159,7 +159,7 @@ class SentinelAgent:
                    note=f"{breakdown.final_score}/100 ({level.value})")
 
         all_ev = [e for c in breakdown.components for e in c.evidence]
-        findings, reassurances = self._split_evidence(all_ev)
+        findings, reassurances, context = self._split_evidence(all_ev)
         has_risky_url = any(c.component == "url" and c.score >= 60 for c in breakdown.components)
 
         ctx.stage("explain")
@@ -167,7 +167,7 @@ class SentinelAgent:
         explanation = explain(input_type=input_type, channel=channel.value if channel else None, level=level,
                               score=breakdown.final_score, components=breakdown.components,
                               findings=findings, reassurances=reassurances)
-        recs = recommend(level, findings, has_risky_url)
+        recs = recommend(level, findings + context, has_risky_url)
         ctx.record("explanation_service", "explain", "Preparing explanation", t,
                    note=f"{explanation.generated_by}; {len(explanation.sources)} guidance sources")
 
@@ -181,7 +181,7 @@ class SentinelAgent:
             classification=risk.classify(level), verdict=risk.VERDICTS[level],
             risk_score=breakdown.final_score, risk_level=level,
             confidence=risk.primary_confidence(breakdown.components),
-            findings=findings, reassurances=reassurances, recommendations=recs, explanation=explanation,
+            findings=findings, reassurances=reassurances, context=context, recommendations=recs, explanation=explanation,
             extracted=ctx.extracted, breakdown=breakdown, trace=ctx.steps, limitations=ctx.limitations,
             duration_ms=int((time.perf_counter() - started) * 1000),
         )
@@ -200,16 +200,18 @@ class SentinelAgent:
         raise SentinelError("CAPABILITY_UNAVAILABLE", "This input type isn't supported yet.", 501)
 
     @staticmethod
-    def _split_evidence(evidence: list[Evidence]) -> tuple[list[Evidence], list[Evidence]]:
+    def _split_evidence(evidence: list[Evidence]) -> tuple[list[Evidence], list[Evidence], list[Evidence]]:
+        """findings = warning signs; reassurances = positive signals; context = neutral facts
+        (e.g. "QR code opens a website") that must not be presented or counted as warnings."""
         reassuring_codes = {"REPUTATION_CLEAN"}
-        findings: dict[str, Evidence] = {}
-        reassurances: dict[str, Evidence] = {}
+        groups: tuple[dict[str, Evidence], ...] = ({}, {}, {})
         for e in evidence:
-            target = reassurances if (e.severity == "positive" or e.code in reassuring_codes) else findings
+            idx = 1 if (e.severity == "positive" or e.code in reassuring_codes) else 2 if e.severity == "info" else 0
+            target = groups[idx]
             if e.code not in target or e.weight > target[e.code].weight:
                 target[e.code] = e
         order = lambda e: (_SEVERITY_RANK[e.severity], -e.weight)  # noqa: E731
-        return sorted(findings.values(), key=order), sorted(reassurances.values(), key=order)
+        return tuple(sorted(g.values(), key=order) for g in groups)  # type: ignore[return-value]
 
     def _add_url(self, raw: str, origin: str, ctx: RunContext) -> list[Artifact]:
         key = raw.lower().rstrip("/")
@@ -289,8 +291,9 @@ class SentinelAgent:
             evidence.append(Evidence(
                 code="TEXT_MODEL_MATCH", label="Wording closely matches known scam messages", severity="high", weight=0,
                 source="text_model",
-                detail=f"The ML classifier estimates a {model_out.probability:.0%} probability that this is a scam, "
-                       "based on patterns learned from thousands of labelled messages.",
+                # Plain language for users; the probability is shown in the technical details.
+                detail="Its overall wording is very similar to scam messages SENTINEL learned from thousands of "
+                       "real, labelled examples.",
             ))
         if len(text) < 25:
             ctx.limitations.append("The message is very short, so there is less for the analysis to go on.")
@@ -331,10 +334,11 @@ class SentinelAgent:
                 e.excerpt = parsed.host
         if analysis.model and analysis.model.probability >= 0.8 and not analysis.trusted:
             evidence.append(Evidence(
-                code="URL_MODEL_MATCH", label=f"Domain name resembles known phishing domains ({parsed.registered_domain})",
-                severity="high", weight=0, source="url_model",
-                detail=f"The URL model estimates a {analysis.model.probability:.0%} probability of phishing from the "
-                       "domain's characters and structure.", excerpt=parsed.host,
+                # "medium": a domain name alone is weaker evidence than wording (see docs/ml-pipeline.md).
+                code="URL_MODEL_MATCH", label=f"Website name looks like known phishing sites ({parsed.registered_domain})",
+                severity="medium", weight=0, source="url_model",
+                detail="The name's structure and characters resemble many known phishing websites. On its own this "
+                       "is a caution, not proof.", excerpt=parsed.host,
             ))
         if art.origin == "qr":
             evidence.append(Evidence(code="QR_URL", label=f"QR code opens a website ({parsed.host})", severity="info",

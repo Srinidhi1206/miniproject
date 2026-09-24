@@ -1,8 +1,7 @@
 "use client";
 
-import * as Collapsible from "@radix-ui/react-collapsible";
 import {
-  ArrowRight, BookOpen, Check, ChevronDown, Copy, Flag, Info, Link2, QrCode, RotateCcw, ShieldCheck, TriangleAlert,
+  ArrowRight, BookOpen, Check, Copy, Flag, Info, Link2, QrCode, RotateCcw, ShieldCheck, TriangleAlert,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -53,7 +52,7 @@ export function AnalysisReport({ result }: { result: AnalysisResult }) {
               <span className="text-2xl text-faint">/100</span>
             </p>
             <p className="mt-1 text-xs text-muted">
-              Model confidence {Math.round(result.confidence * 100)}% · analyzed in {result.duration_ms} ms
+              Risk score · checked in {result.duration_ms} ms
             </p>
           </div>
         </div>
@@ -70,7 +69,7 @@ export function AnalysisReport({ result }: { result: AnalysisResult }) {
             {result.findings.length === 0 ? (
               <p className="mt-4 flex items-center gap-2 text-sm text-muted">
                 <ShieldCheck className="size-4 text-safe" aria-hidden />
-                No scam tactics were detected by the rules.
+                No warning signs found.
               </p>
             ) : (
               <ul className="mt-4 divide-y divide-line">
@@ -94,7 +93,7 @@ export function AnalysisReport({ result }: { result: AnalysisResult }) {
 
           {/* ---------------------------------------------- why it matters */}
           <Card className="p-5 sm:p-6">
-            <SectionTitle eyebrow="Explanation" title="Why this matters" />
+            <SectionTitle eyebrow="Explanation" title={result.findings.length ? "Why this matters" : "What this means"} />
             <ul className="mt-4 space-y-3">
               {result.explanation.why_it_matters.map((w, i) => (
                 <li key={i} className="flex gap-3 text-[0.95rem] leading-relaxed text-ink-2">
@@ -184,38 +183,20 @@ function SectionTitle({ eyebrow, title }: { eyebrow: string; title: string }) {
 
 function FindingRow({ f }: { f: Evidence }) {
   const s = SEVERITY[f.severity];
-  const [open, setOpen] = useState(false);
   return (
-    <li className="py-3.5">
-      <Collapsible.Root open={open} onOpenChange={setOpen}>
-        <div className="flex items-start gap-3">
-          <span className={cn("mt-0.5 shrink-0 rounded-xs px-1.5 py-0.5 font-mono text-[0.62rem] font-semibold uppercase tracking-wider", s.bg, s.text)}>
-            {s.label}
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="font-medium leading-snug text-ink">{f.label}</p>
-            {f.excerpt && (
-              <p className="mt-1.5 break-words rounded-xs border-l-2 border-line-strong bg-surface-2 px-2 py-1 font-mono text-xs text-ink-2">
-                “{f.excerpt}”
-              </p>
-            )}
-            <Collapsible.Content className="mt-2 text-sm leading-relaxed text-muted data-[state=open]:animate-fade">
-              {f.detail}
-              <span className="mt-1 block font-mono text-[0.68rem] text-faint">
-                {f.code} · {f.source} · {f.weight > 0 ? `+${f.weight}` : f.weight} pts
-              </span>
-            </Collapsible.Content>
-          </div>
-          {f.detail && (
-            <Collapsible.Trigger asChild>
-              <button type="button" className="shrink-0 rounded-sm p-1 text-muted hover:bg-paper-2 hover:text-ink"
-                aria-label={open ? `Hide details for ${f.label}` : `Why does “${f.label}” matter?`}>
-                <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} aria-hidden />
-              </button>
-            </Collapsible.Trigger>
-          )}
-        </div>
-      </Collapsible.Root>
+    <li className="flex items-start gap-3 py-3.5">
+      <span className={cn("mt-0.5 w-[4.5rem] shrink-0 rounded-xs px-1.5 py-0.5 text-center font-mono text-[0.62rem] font-semibold uppercase tracking-wider", s.bg, s.text)}>
+        {s.label}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-medium leading-snug text-ink">{f.label}</p>
+        {f.excerpt && (
+          <p className="mt-1.5 break-words rounded-xs border-l-2 border-line-strong bg-surface-2 px-2 py-1 font-mono text-xs text-ink-2">
+            “{f.excerpt}”
+          </p>
+        )}
+        {f.detail && <p className="mt-1.5 text-sm leading-relaxed text-muted">{f.detail}</p>}
+      </div>
     </li>
   );
 }
@@ -229,12 +210,22 @@ function SubmittedContent({ result }: { result: AnalysisResult }) {
         {result.input_preview || "—"}
       </p>
       <p className="mt-2 text-xs text-muted">Long numbers are masked. The full text isn&apos;t stored.</p>
+      {result.context.length > 0 && (
+        <ul className="mt-4 space-y-1.5 border-t border-line pt-4">
+          {result.context.map((c) => (
+            <li key={c.code} className="flex gap-2 text-sm text-ink-2">
+              <Info className="mt-0.5 size-4 shrink-0 text-muted" aria-hidden />
+              <span>{c.label}{c.detail && <span className="text-muted"> — {c.detail}</span>}</span>
+            </li>
+          ))}
+        </ul>
+      )}
       {(x.qr_payload || x.urls.length > 0 || x.ocr_confidence != null) && (
         <dl className="mt-4 grid gap-3 border-t border-line pt-4 text-sm sm:grid-cols-2">
           {x.ocr_confidence != null && (
             <div>
-              <dt className="eyebrow">Text read from image</dt>
-              <dd className="mt-1 text-ink-2">OCR confidence {Math.round(x.ocr_confidence * 100)}%</dd>
+              <dt className="eyebrow">Text read from your image</dt>
+              <dd className="mt-1 text-ink-2">Read clarity {Math.round(x.ocr_confidence * 100)}%</dd>
             </div>
           )}
           {x.qr_payload && (

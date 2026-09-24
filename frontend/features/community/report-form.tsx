@@ -78,7 +78,7 @@ export function ReportForm() {
         </div>
         <div className="space-y-5 p-6">
           <p className="text-sm leading-relaxed text-ink-2">
-            Thank you. Your report {receipt.location ? `now counts toward ${receipt.location} on the ` : "is included in the "}
+            Your report has been recorded in SENTINEL. {receipt.location ? `It now counts toward ${receipt.location} on the ` : "It is included in the "}
             <Link href="/map" className="underline underline-offset-4">community scam map</Link>
             {" "}— only the city and scam type are shown publicly{receipt.evidence_attached ? "; your screenshot is kept private" : ""}.
           </p>

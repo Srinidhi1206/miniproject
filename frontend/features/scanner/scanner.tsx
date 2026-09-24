@@ -118,7 +118,7 @@ export function Scanner({ initialMode = "message", className, compact = false }:
                 <m.icon className="size-4" aria-hidden />
                 {m.label}
                 {m.disabled && (
-                  <span className="rounded-xs bg-paper-2 px-1 py-px font-mono text-[0.6rem] uppercase tracking-wider text-faint">Soon</span>
+                  <span className="rounded-xs bg-paper-2 px-1 py-px font-mono text-[0.6rem] uppercase tracking-wider text-faint">Next phase</span>
                 )}
               </Tabs.Trigger>
             ))}
@@ -222,7 +222,7 @@ export function Scanner({ initialMode = "message", className, compact = false }:
 
           <Tabs.Content value="voice" className="focus-visible:outline-none">
             <div className="rounded-sm border border-dashed border-line-strong bg-surface-2 p-5">
-              <p className="font-medium text-ink">Voice analysis isn&apos;t available in the current version.</p>
+              <p className="font-medium text-ink">Voice analysis — coming in the next phase</p>
               <p className="mt-1.5 text-sm leading-relaxed text-muted">
                 Speech-to-text and voice-authenticity (deepfake) detection are planned for a later phase. SENTINEL won&apos;t
                 show a result it can&apos;t genuinely produce. If you have a transcript or remember what the caller said,

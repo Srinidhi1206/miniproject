@@ -1,0 +1,345 @@
+[
+  {
+    "expect": "safe",
+    "kind": "message",
+    "name": "Personal message",
+    "status": 200,
+    "risk_level": "LOW",
+    "risk_score": 0,
+    "findings": [],
+    "error": null
+  },
+  {
+    "expect": "safe",
+    "kind": "message",
+    "name": "Informational notice",
+    "status": 200,
+    "risk_level": "LOW",
+    "risk_score": 5,
+    "findings": [],
+    "error": null
+  },
+  {
+    "expect": "safe",
+    "kind": "message",
+    "name": "Genuine bank OTP",
+    "status": 200,
+    "risk_level": "LOW",
+    "risk_score": 2,
+    "findings": [],
+    "error": null
+  },
+  {
+    "expect": "safe",
+    "kind": "message",
+    "name": "Genuine delivery update",
+    "status": 200,
+    "risk_level": "LOW",
+    "risk_score": 0,
+    "findings": [],
+    "error": null
+  },
+  {
+    "expect": "scam",
+    "kind": "message",
+    "name": "Urgent payment request",
+    "status": 200,
+    "risk_level": "CRITICAL",
+    "risk_score": 98,
+    "findings": [
+      "PAYMENT_REQUEST",
+      "FAMILY_EMERGENCY",
+      "TEXT_MODEL_MATCH",
+      "URGENCY"
+    ],
+    "error": null
+  },
+  {
+    "expect": "scam",
+    "kind": "message",
+    "name": "Fake KYC",
+    "status": 200,
+    "risk_level": "CRITICAL",
+    "risk_score": 100,
+    "findings": [
+      "BRAND_IMPERSONATION",
+      "SENSITIVE_DATA",
+      "ACCOUNT_THREAT",
+      "TEXT_MODEL_MATCH",
+      "URL_MODEL_MATCH",
+      "SENSITIVE_KEYWORDS",
+      "URGENCY",
+      "NO_HTTPS",
+      "HYPHENATED_HOST",
+      "GENERIC_GREETING"
+    ],
+    "error": null
+  },
+  {
+    "expect": "scam",
+    "kind": "message",
+    "name": "Fake job offer",
+    "status": 200,
+    "risk_level": "CRITICAL",
+    "risk_score": 100,
+    "findings": [
+      "UPFRONT_FEE",
+      "PAYMENT_REQUEST",
+      "UNREALISTIC_RETURNS",
+      "TEXT_MODEL_MATCH",
+      "TASK_JOB"
+    ],
+    "error": null
+  },
+  {
+    "expect": "scam",
+    "kind": "message",
+    "name": "UPI scam",
+    "status": 200,
+    "risk_level": "CRITICAL",
+    "risk_score": 99,
+    "findings": [
+      "PIN_REQUEST",
+      "RECEIVE_MONEY_TRICK",
+      "TEXT_MODEL_MATCH"
+    ],
+    "error": null
+  },
+  {
+    "expect": "suspicious",
+    "kind": "message",
+    "name": "Unexpected delivery link",
+    "status": 200,
+    "risk_level": "HIGH",
+    "risk_score": 78,
+    "findings": [
+      "URL_MODEL_MATCH",
+      "TEXT_MODEL_MATCH",
+      "SUSPICIOUS_TLD",
+      "NO_HTTPS",
+      "HYPHENATED_HOST"
+    ],
+    "error": null
+  },
+  {
+    "expect": "safe",
+    "kind": "url",
+    "name": "Legitimate bank site",
+    "status": 200,
+    "risk_level": "LOW",
+    "risk_score": 0,
+    "findings": [],
+    "error": null
+  },
+  {
+    "expect": "safe",
+    "kind": "url",
+    "name": "Legitimate government site",
+    "status": 200,
+    "risk_level": "LOW",
+    "risk_score": 0,
+    "findings": [],
+    "error": null
+  },
+  {
+    "expect": "safe",
+    "kind": "url",
+    "name": "Legitimate everyday site",
+    "status": 200,
+    "risk_level": "LOW",
+    "risk_score": 0,
+    "findings": [],
+    "error": null
+  },
+  {
+    "expect": "scam",
+    "kind": "url",
+    "name": "Brand look-alike",
+    "status": 200,
+    "risk_level": "CRITICAL",
+    "risk_score": 83,
+    "findings": [
+      "BRAND_IMPERSONATION",
+      "URL_MODEL_MATCH",
+      "SENSITIVE_KEYWORDS",
+      "NO_HTTPS"
+    ],
+    "error": null
+  },
+  {
+    "expect": "scam",
+    "kind": "url",
+    "name": "KYC phishing on cheap TLD",
+    "status": 200,
+    "risk_level": "CRITICAL",
+    "risk_score": 100,
+    "findings": [
+      "BRAND_IMPERSONATION",
+      "URL_MODEL_MATCH",
+      "SENSITIVE_KEYWORDS",
+      "SUSPICIOUS_TLD",
+      "HYPHENATED_HOST"
+    ],
+    "error": null
+  },
+  {
+    "expect": "suspicious",
+    "kind": "url",
+    "name": "Shortened link",
+    "status": 200,
+    "risk_level": "MEDIUM",
+    "risk_score": 57,
+    "findings": [
+      "URL_MODEL_MATCH",
+      "SHORTENER"
+    ],
+    "error": null
+  },
+  {
+    "expect": "scam",
+    "kind": "url",
+    "name": "APK download",
+    "status": 200,
+    "risk_level": "CRITICAL",
+    "risk_score": 93,
+    "findings": [
+      "RISKY_DOWNLOAD",
+      "URL_MODEL_MATCH",
+      "SUSPICIOUS_TLD",
+      "NO_HTTPS",
+      "HYPHENATED_HOST"
+    ],
+    "error": null
+  },
+  {
+    "expect": "error:INVALID_URL",
+    "kind": "url",
+    "name": "Not a URL",
+    "status": 400,
+    "risk_level": null,
+    "risk_score": null,
+    "findings": [],
+    "error": {
+      "code": "INVALID_URL",
+      "message": "That doesn't look like a valid web address \u2014 scripts and local files can't be analyzed as web links.",
+      "hint": "Paste the full link, for example https://example.com/page"
+    }
+  },
+  {
+    "expect": "safe",
+    "kind": "qr",
+    "name": "QR: safe website",
+    "status": 200,
+    "risk_level": "LOW",
+    "risk_score": 2,
+    "findings": [
+      "QR_URL"
+    ],
+    "error": null
+  },
+  {
+    "expect": "scam",
+    "kind": "qr",
+    "name": "QR: suspicious URL",
+    "status": 200,
+    "risk_level": "CRITICAL",
+    "risk_score": 100,
+    "findings": [
+      "BRAND_IMPERSONATION",
+      "URL_MODEL_MATCH",
+      "SENSITIVE_KEYWORDS",
+      "SUSPICIOUS_TLD",
+      "NO_HTTPS",
+      "HYPHENATED_HOST",
+      "QR_URL"
+    ],
+    "error": null
+  },
+  {
+    "expect": "scam",
+    "kind": "qr",
+    "name": "QR: UPI refund bait",
+    "status": 200,
+    "risk_level": "HIGH",
+    "risk_score": 75,
+    "findings": [
+      "UPI_BAIT_NOTE",
+      "UPI_PRESET_AMOUNT",
+      "UPI_PERSONAL_PAYEE",
+      "UPI_PAYMENT_QR"
+    ],
+    "error": null
+  },
+  {
+    "expect": "error:QR_NOT_FOUND",
+    "kind": "qr",
+    "name": "QR: cannot be decoded",
+    "status": 422,
+    "risk_level": null,
+    "risk_score": null,
+    "findings": [],
+    "error": {
+      "code": "QR_NOT_FOUND",
+      "message": "We couldn't detect a QR code in this image.",
+      "hint": "Crop the image around the QR code, make sure it's in focus, and try again."
+    }
+  },
+  {
+    "expect": "scam",
+    "kind": "image",
+    "name": "Screenshot: scam text",
+    "status": 200,
+    "risk_level": "CRITICAL",
+    "risk_score": 100,
+    "findings": [
+      "OTP_REQUEST",
+      "ACCOUNT_THREAT",
+      "TEXT_MODEL_MATCH",
+      "URGENCY"
+    ],
+    "error": null
+  },
+  {
+    "expect": "scam",
+    "kind": "image",
+    "name": "Screenshot: scam text + URL",
+    "status": 200,
+    "risk_level": "CRITICAL",
+    "risk_score": 93,
+    "findings": [
+      "ACCOUNT_THREAT",
+      "TEXT_MODEL_MATCH",
+      "URL_MODEL_MATCH",
+      "URGENCY",
+      "SUSPICIOUS_TLD",
+      "SENSITIVE_KEYWORDS",
+      "NO_HTTPS",
+      "HYPHENATED_HOST"
+    ],
+    "error": null
+  },
+  {
+    "expect": "safe",
+    "kind": "image",
+    "name": "Screenshot: normal chat",
+    "status": 200,
+    "risk_level": "LOW",
+    "risk_score": 2,
+    "findings": [],
+    "error": null
+  },
+  {
+    "expect": "error:NO_CONTENT",
+    "kind": "image",
+    "name": "Image with no readable text",
+    "status": 422,
+    "risk_level": null,
+    "risk_score": null,
+    "findings": [],
+    "error": {
+      "code": "NO_CONTENT",
+      "message": "We couldn't find anything to analyze in that input.",
+      "hint": "Try a clearer screenshot, or paste the message text directly."
+    }
+  }
+]

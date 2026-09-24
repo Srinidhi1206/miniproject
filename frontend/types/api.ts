@@ -110,6 +110,8 @@ export interface AnalysisResult {
   confidence: number;
   findings: Evidence[];
   reassurances: Evidence[];
+  /** Neutral facts (e.g. what a QR code contains) — never presented as warnings. */
+  context: Evidence[];
   recommendations: Recommendation[];
   explanation: Explanation;
   extracted: ExtractedContent;

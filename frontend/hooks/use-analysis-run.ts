@@ -36,10 +36,11 @@ export function useAnalysisRun() {
       if (e.type === "stage") {
         const stages = { ...s.stages };
         const idx = ORDER.indexOf(e.stage);
+        // Stages can legitimately run out of order (a message is classified, THEN its links
+        // are extracted), so earlier pending stages stay pending; only unused stages are
+        // marked "not needed" once the whole run has finished.
         ORDER.forEach((st, i) => {
-          if (i < idx && (stages[st] === "active" || stages[st] === "pending")) {
-            stages[st] = stages[st] === "active" ? "done" : "skipped";
-          }
+          if (i !== idx && stages[st] === "active") stages[st] = "done";
         });
         stages[e.stage] = "active";
         return { ...s, stages };

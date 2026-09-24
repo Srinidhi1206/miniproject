@@ -58,9 +58,29 @@ export function TechnicalDetails({ result }: { result: AnalysisResult }) {
             <p className="mt-1 font-mono text-[0.68rem] leading-relaxed text-faint">{b.formula}</p>
           </section>
 
+          {/* Evidence points */}
+          <section>
+            <h3 className="eyebrow mb-3">Evidence and points</h3>
+            <ul className="space-y-1 font-mono text-xs">
+              {b.components.flatMap((c, ci) => c.evidence.map((e, ei) => (
+                <li key={`${ci}-${ei}`} className="flex flex-wrap gap-x-3 text-ink-2">
+                  <span className="w-10 text-right tabular-nums text-ink">{e.weight > 0 ? `+${e.weight}` : e.weight}</span>
+                  <span className="text-ink">{e.code}</span>
+                  <span className="text-faint">{c.component} · {e.source} · {e.severity}</span>
+                </li>
+              )))}
+            </ul>
+            <p className="mt-2 text-xs text-muted">
+              Model-match items carry 0 rule points: the model&apos;s contribution is counted once, in “Model pts”.
+            </p>
+          </section>
+
           {/* Model outputs */}
           <section>
             <h3 className="eyebrow mb-3">Model outputs</h3>
+            <p className="mb-3 text-xs text-muted">
+              Confidence of the main model in its own answer: {Math.round(result.confidence * 100)}%
+            </p>
             <div className="grid gap-3 md:grid-cols-2">
               {b.components.filter((c) => c.model).map((c, i) => (
                 <div key={i} className="rounded-sm border border-line p-3">

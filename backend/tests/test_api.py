@@ -148,3 +148,41 @@ def test_safety_guides(client):
     g = client.get("/api/safety-guides/upi-safety").json()
     assert "UPI PIN" in g["body_markdown"]
     assert client.get("/api/safety-guides/nope").status_code == 404
+
+
+def test_safe_qr_is_not_padded_with_warnings(client):
+    """Review finding: a harmless website QR said '1 warning sign' and showed UPI-scam guidance."""
+    body = client.post("/api/analyze/qr", files={"file": ("q.png", qr_png("https://www.irctc.co.in/"), "image/png")}).json()
+    assert body["risk_level"] == "LOW" and body["verdict"] == "No warning signs found"
+    assert body["findings"] == []
+    assert [c["code"] for c in body["context"]] == ["QR_URL"]          # neutral fact, not a warning
+    assert "warning sign" not in body["explanation"]["summary"].replace("didn't find warning signs", "")
+    assert body["explanation"]["sources"] == []
+    assert not any("UPI" in w for w in body["explanation"]["why_it_matters"])
+
+
+def test_user_facing_language_has_no_model_jargon(client):
+    body = client.post("/api/analyze/text", json={"text": SCAM_SMS}).json()
+    user_text = " ".join([body["explanation"]["summary"], *body["explanation"]["why_it_matters"],
+                          *[f["label"] + " " + (f["detail"] or "") for f in body["findings"]]])
+    for jargon in ("classifier", "probability", "%", "model estimates"):
+        assert jargon not in user_text
+    # ...while the numbers remain available for technical users.
+    assert body["breakdown"]["components"][0]["model"]["probability"] > 0.5
+
+
+def test_explanation_is_grounded_in_found_evidence(client):
+    body = client.post("/api/analyze/text", json={
+        "text": "Congratulations, you are selected for a work from home job. Pay Rs 499 registration fee to start."}).json()
+    codes = {f["code"] for f in body["findings"]}
+    guides = {s["slug"] for s in body["explanation"]["sources"]}
+    assert "UPFRONT_FEE" in codes and "job-scams" in guides
+    # why_it_matters doesn't repeat the finding rationales verbatim
+    details = {f["detail"] for f in body["findings"] if f["detail"]}
+    assert not any(d in w for d in details for w in body["explanation"]["why_it_matters"])
+
+
+def test_medium_url_warning_is_worded_as_caution(client):
+    body = client.post("/api/analyze/url", json={"url": "https://bit.ly/3xVidz0"}).json()
+    assert body["risk_level"] == "MEDIUM" and body["verdict"] == "Potentially suspicious"
+    assert "may be genuine" in body["explanation"]["summary"]

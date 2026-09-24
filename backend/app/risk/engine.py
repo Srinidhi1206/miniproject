@@ -63,8 +63,9 @@ def classify(level: RiskLevel) -> Classification:
 
 
 VERDICTS = {
-    RiskLevel.LOW: "Likely safe",
-    RiskLevel.MEDIUM: "Suspicious — be careful",
+    # Wording strength follows the evidence: never "safe", never certain below CRITICAL.
+    RiskLevel.LOW: "No warning signs found",
+    RiskLevel.MEDIUM: "Potentially suspicious",
     RiskLevel.HIGH: "Potential scam",
     RiskLevel.CRITICAL: "Very likely a scam",
 }
