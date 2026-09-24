@@ -105,7 +105,7 @@ export function Scanner({ initialMode = "message", className, compact = false }:
       <Tabs.Root value={mode} onValueChange={(v) => setMode(v as ScanMode)}>
         <div className="border-b border-line bg-surface-2 px-4 pt-4 sm:px-6">
           <p className="eyebrow mb-3">What would you like to check?</p>
-          <Tabs.List aria-label="Type of content to check" className="-mb-px flex gap-1 overflow-x-auto">
+          <Tabs.List aria-label="Type of content to check" className="-mb-px flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {MODES.map((m) => (
               <Tabs.Trigger
                 key={m.id}

@@ -61,9 +61,9 @@ export default function HomePage() {
           <p className="eyebrow animate-rise">AI scam prevention · free · no sign-up</p>
           <h1 className="mt-4 max-w-4xl animate-rise text-[2.35rem] font-semibold leading-[1.04] tracking-[-0.035em] text-ink [animation-delay:60ms] sm:text-6xl lg:text-[4.4rem]">
             Before you click, pay, reply, or trust — <span className="relative whitespace-nowrap">
-              check it
+              check it.
               <span className="absolute inset-x-0 bottom-[0.08em] -z-10 h-[0.28em] bg-signal" aria-hidden />
-            </span>.
+            </span>
           </h1>
           <p className="mt-6 max-w-2xl animate-rise text-lg leading-relaxed text-ink-2 [animation-delay:120ms]">
             Paste a message, drop a screenshot, check a link or scan a QR code. SENTINEL shows you the risk, the exact
