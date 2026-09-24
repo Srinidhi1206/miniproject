@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { Buffer } from "node:buffer";
 
-// The MVP definition of done, as a test: no login → paste → analyse →
-// live progress → score, reasons, actions → analyse another.
+// The MVP definition of done, as a test: no login → paste → analyze →
+// live progress → score, reasons, actions → analyze another.
 
 test("message scan: from landing page to explained result", async ({ page }) => {
   await page.goto("/");
@@ -13,7 +13,7 @@ test("message scan: from landing page to explained result", async ({ page }) => 
   await page.getByPlaceholder(/Dear customer/).fill(
     "Hi, I am buying your sofa listed on OLX. I will pay by QR code. Just scan the QR I send and enter your UPI PIN to receive 15000.",
   );
-  await page.getByRole("button", { name: /Analyse message/ }).click();
+  await page.getByRole("button", { name: /Analyze message/ }).click();
 
   // Real progress from the agent stream
   await expect(page.getByRole("status")).toContainText(/text_classifier/);
@@ -35,7 +35,7 @@ test("message scan: from landing page to explained result", async ({ page }) => 
 test("link scan explains a look-alike domain", async ({ page }) => {
   await page.goto("/analyze?mode=url");
   await page.getByPlaceholder("https://example.com/login").fill("http://paypa1-resolution.com/login/verify");
-  await page.getByRole("button", { name: /Analyse link/ }).click();
+  await page.getByRole("button", { name: /Analyze link/ }).click();
   await page.waitForURL(/\/analysis\//);
   await expect(page.getByText(/isn.t paypal.s official website/i).first()).toBeVisible();
 });
@@ -45,7 +45,7 @@ test("QR upload with no QR code gives a helpful error", async ({ page }) => {
   // 1x1 white PNG
   const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4//8/AAX+Av4N70a4AAAAAElFTkSuQmCC", "base64");
   await page.locator('input[type="file"]').setInputFiles({ name: "blank.png", mimeType: "image/png", buffer: png });
-  await page.getByRole("button", { name: /Analyse QR code/ }).click();
+  await page.getByRole("button", { name: /Analyze QR code/ }).click();
   await expect(page.getByRole("alert").filter({ hasText: /couldn't detect a QR code/ })).toBeVisible();
 });
 

@@ -69,7 +69,7 @@ class ModelOutput(BaseModel):
 
 
 class ComponentScore(BaseModel):
-    """Score for one analysed item (the message text, or one URL)."""
+    """Score for one analyzed item (the message text, or one URL)."""
 
     component: Literal["text", "url", "upi"]
     subject: str

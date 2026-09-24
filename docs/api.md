@@ -43,7 +43,7 @@ WhatsApp share one text pipeline; the channel is kept as context).
 ```json
 { "url": "http://sbi-kyc-verify.co/update" }
 ```
-The URL is parsed and analysed lexically; it is never fetched.
+The URL is parsed and analyzed lexically; it is never fetched.
 
 ### `POST /api/analyze/image` — multipart `file` (+ optional `channel`)
 ### `POST /api/analyze/qr` — multipart `file`

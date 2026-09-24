@@ -65,7 +65,7 @@ export function Dropzone({
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-ink">{file.name || "Pasted image"}</p>
           <p className="font-mono text-xs text-muted">{file.type.replace("image/", "").toUpperCase()} · {formatBytes(file.size)}</p>
-          <p className="mt-1 text-xs text-muted">Ready to analyse. The image is processed and not stored.</p>
+          <p className="mt-1 text-xs text-muted">Ready to analyze. The image is processed and not stored.</p>
         </div>
         <button
           type="button"

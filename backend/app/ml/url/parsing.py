@@ -63,7 +63,7 @@ def parse_url(raw: str) -> ParsedURL:
     has_scheme = bool(re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*://", text))
     if not has_scheme:
         if re.match(r"^(javascript|data|vbscript|file):", text, re.I):
-            raise invalid_url("scripts and local files can't be analysed as web links")
+            raise invalid_url("scripts and local files can't be analyzed as web links")
         text = "http://" + text
     parts = urlsplit(text)
     scheme = parts.scheme.lower()

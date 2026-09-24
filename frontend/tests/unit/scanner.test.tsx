@@ -19,7 +19,7 @@ describe("Scanner", () => {
   it("validates an empty message without calling the API", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     render(<Scanner />);
-    fireEvent.click(screen.getByRole("button", { name: /Analyse message/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Analyze message/i }));
     expect(screen.getByRole("alert")).toHaveTextContent(/Paste the message/);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
@@ -27,7 +27,7 @@ describe("Scanner", () => {
   it("shows the voice capability notice instead of a fake analyser", () => {
     render(<Scanner initialMode="voice" />);
     expect(screen.getByText(/isn't available in the current version/i)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Analyse/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Analyze/ })).not.toBeInTheDocument();
   });
 
   it("lets people pick the message source", () => {

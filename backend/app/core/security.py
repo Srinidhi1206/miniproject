@@ -64,7 +64,7 @@ def load_image(data: bytes) -> Image.Image:
         img = Image.open(io.BytesIO(data))
         img.load()
     except Image.DecompressionBombError:
-        raise SentinelError("IMAGE_TOO_LARGE", "That image's dimensions are too large to analyse safely.", 413)
+        raise SentinelError("IMAGE_TOO_LARGE", "That image's dimensions are too large to analyze safely.", 413)
     except (UnidentifiedImageError, OSError, SyntaxError):
         raise SentinelError("CORRUPT_IMAGE", "We couldn't read that image. It may be damaged or not a real image.", 400)
     if img.format not in IMAGE_FORMATS:
@@ -87,7 +87,7 @@ def validate_text(text: str, *, field: str = "text", min_chars: int = 3) -> str:
     text = clean_text(text or "")
     limit = get_settings().max_text_chars
     if len(text) < min_chars:
-        raise SentinelError("TEXT_TOO_SHORT", "Please paste the full message so SENTINEL has enough to analyse.", 400)
+        raise SentinelError("TEXT_TOO_SHORT", "Please paste the full message so SENTINEL has enough to analyze.", 400)
     if len(text) > limit:
         raise SentinelError("TEXT_TOO_LONG", f"That's longer than the {limit:,}-character limit.", 413,
                             hint="Paste the most relevant part of the message.")

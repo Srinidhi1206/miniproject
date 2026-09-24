@@ -15,4 +15,4 @@ Criminals can copy someone's voice from short clips on social media and use it i
 Hang up and call the person back on the number you already have. Agree on a family code word for emergencies. Ask a question only the real person would know.
 
 ## A note on detection
-Automatic deepfake detection is still unreliable. SENTINEL does not currently analyse voice recordings for authenticity; if you have a transcript of a suspicious call, paste it into the message scanner to check the words used.
+Automatic deepfake detection is still unreliable. SENTINEL does not currently analyze voice recordings for authenticity; if you have a transcript of a suspicious call, paste it into the message scanner to check the words used.

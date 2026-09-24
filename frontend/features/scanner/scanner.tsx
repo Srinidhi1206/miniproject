@@ -70,7 +70,7 @@ export function Scanner({ initialMode = "message", className, compact = false }:
       if (/\s/.test(u)) return "Links can't contain spaces. Paste just the address.";
       return { kind: "url", url: u };
     }
-    if (mode === "image") return imageFile ? { kind: "image", file: imageFile, channel: "other" } : "Choose a screenshot to analyse.";
+    if (mode === "image") return imageFile ? { kind: "image", file: imageFile, channel: "other" } : "Choose a screenshot to analyze.";
     if (mode === "qr") return qrFile ? { kind: "qr", file: qrFile } : "Choose an image of the QR code.";
     return "Voice analysis isn't available yet.";
   };
@@ -168,7 +168,7 @@ export function Scanner({ initialMode = "message", className, compact = false }:
                 aria-describedby={fieldError ? errId : undefined}
               />
               <FieldHint className="flex justify-between gap-4">
-                <span>Include links and phone numbers exactly as received. Ctrl+Enter to analyse.</span>
+                <span>Include links and phone numbers exactly as received. Ctrl+Enter to analyze.</span>
                 <span className={cn("font-mono tabular-nums", text.length > MAX_TEXT && "text-critical")}>
                   {text.length.toLocaleString()}/{MAX_TEXT.toLocaleString()}
                 </span>
@@ -251,7 +251,7 @@ export function Scanner({ initialMode = "message", className, compact = false }:
                 <Lock className="size-3" aria-hidden /> No sign-up. Full message text isn&apos;t stored.
               </p>
               <Button type="submit" size="lg" onClick={() => state.phase === "error" && reset()}>
-                Analyse {mode === "message" ? "message" : mode === "url" ? "link" : mode === "image" ? "screenshot" : "QR code"}
+                Analyze {mode === "message" ? "message" : mode === "url" ? "link" : mode === "image" ? "screenshot" : "QR code"}
                 <ArrowRight aria-hidden />
               </Button>
             </div>

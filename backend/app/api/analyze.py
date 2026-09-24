@@ -81,21 +81,21 @@ def _respond(stream: bool, input_type: InputType, payload, channel: Channel | No
                              headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
 
 
-@router.post("/text", response_model=AnalysisResult, summary="Analyse a message (SMS, WhatsApp, email, job offer)")
+@router.post("/text", response_model=AnalysisResult, summary="Analyze a message (SMS, WhatsApp, email, job offer)")
 def analyze_text(body: TextAnalyzeRequest, stream: bool = Query(False), client_id: str | None = Depends(optional_client_id)):
     text = validate_text(body.text)
     log.info("analyze text channel=%s len=%d preview=%s", body.channel.value, len(text), redact_for_log(text))
     return _respond(stream, InputType.TEXT, text, body.channel, client_id)
 
 
-@router.post("/url", response_model=AnalysisResult, summary="Analyse a link without visiting it")
+@router.post("/url", response_model=AnalysisResult, summary="Analyze a link without visiting it")
 def analyze_url(body: UrlAnalyzeRequest, stream: bool = Query(False), client_id: str | None = Depends(optional_client_id)):
     parsed = parse_url(body.url)  # validate up front -> friendly 400
     log.info("analyze url host=%s", parsed.host)
     return _respond(stream, InputType.URL, parsed.original, None, client_id)
 
 
-@router.post("/image", response_model=AnalysisResult, summary="Analyse a screenshot (OCR + QR + text + links)")
+@router.post("/image", response_model=AnalysisResult, summary="Analyze a screenshot (OCR + QR + text + links)")
 async def analyze_image(file: UploadFile = File(...), channel: Channel = Form(Channel.other), stream: bool = Query(False),
                         client_id: str | None = Depends(optional_client_id)):
     image = load_image(await read_upload(file))
@@ -103,7 +103,7 @@ async def analyze_image(file: UploadFile = File(...), channel: Channel = Form(Ch
     return _respond(stream, InputType.IMAGE, image, channel, client_id)
 
 
-@router.post("/qr", response_model=AnalysisResult, summary="Decode a QR code image and analyse its destination")
+@router.post("/qr", response_model=AnalysisResult, summary="Decode a QR code image and analyze its destination")
 async def analyze_qr(file: UploadFile = File(...), stream: bool = Query(False),
                      client_id: str | None = Depends(optional_client_id)):
     image = load_image(await read_upload(file))

@@ -31,7 +31,7 @@ export function SiteFooter() {
         <div>
           <p className="eyebrow mb-3">SENTINEL</p>
           <ul className="space-y-2 text-sm text-ink-2">
-            <li><Link href="/analyze" className="hover:text-ink">Analyse</Link></li>
+            <li><Link href="/analyze" className="hover:text-ink">Analyze</Link></li>
             <li><Link href="/safety" className="hover:text-ink">Safety Center</Link></li>
             <li><Link href="/map" className="hover:text-ink">Scam map</Link></li>
             <li><Link href="/settings" className="hover:text-ink">Privacy &amp; system status</Link></li>

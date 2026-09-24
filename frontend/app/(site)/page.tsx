@@ -204,7 +204,7 @@ export default function HomePage() {
             <ul className="space-y-3 text-sm">
               {[
                 [MessageSquareText, "Messages — SMS, WhatsApp, email, job offers"],
-                [ArrowUpRight, "Links — analysed without ever being opened"],
+                [ArrowUpRight, "Links — analyzed without ever being opened"],
                 [ScanText, "Screenshots — OCR, then text, link and QR analysis"],
                 [CircleDashed, "QR codes — websites and UPI payment requests"],
               ].map(([Icon, t]) => {

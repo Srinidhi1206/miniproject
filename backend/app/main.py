@@ -57,7 +57,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="SENTINEL API",
         version="0.1.0",
-        description="AI consumer scam prevention: analyse messages, links, screenshots and QR codes.",
+        description="AI consumer scam prevention: analyze messages, links, screenshots and QR codes.",
         lifespan=lifespan,
     )
     app.add_middleware(SecurityHeaders)

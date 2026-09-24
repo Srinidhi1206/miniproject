@@ -6,7 +6,7 @@ they cost.
 ---
 
 ## ADR-001 — No login for the core scanner
-**Decision.** Anyone can analyse content without an account. History is grouped
+**Decision.** Anyone can analyze content without an account. History is grouped
 by a random device id kept in `localStorage`.
 **Why.** The moment someone receives a suspicious message is exactly when a sign-up
 wall makes them give up. The product's value is immediate.

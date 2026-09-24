@@ -15,7 +15,7 @@ export function ProgressConsole({ state, subject }: { state: RunState; subject: 
         <div className="flex items-center gap-2.5">
           <span className="size-2 rounded-full bg-signal animate-pulse-dot" aria-hidden />
           <span className="font-mono text-xs uppercase tracking-[0.14em]">
-            {state.phase === "done" ? "Analysis complete" : "Analysing"}
+            {state.phase === "done" ? "Analysis complete" : "Analyzing"}
           </span>
         </div>
         <span className="font-mono text-xs text-console-muted">{doneCount}/{STAGES.length}</span>

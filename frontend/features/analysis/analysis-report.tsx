@@ -53,7 +53,7 @@ export function AnalysisReport({ result }: { result: AnalysisResult }) {
               <span className="text-2xl text-faint">/100</span>
             </p>
             <p className="mt-1 text-xs text-muted">
-              Model confidence {Math.round(result.confidence * 100)}% · analysed in {result.duration_ms} ms
+              Model confidence {Math.round(result.confidence * 100)}% · analyzed in {result.duration_ms} ms
             </p>
           </div>
         </div>
@@ -269,7 +269,7 @@ function SubmittedContent({ result }: { result: AnalysisResult }) {
                 })}
               </dd>
               <p className="mt-2 flex items-center gap-1.5 text-xs text-muted">
-                <TriangleAlert className="size-3" aria-hidden />Links were analysed without being opened.
+                <TriangleAlert className="size-3" aria-hidden />Links were analyzed without being opened.
               </p>
             </div>
           )}

@@ -33,7 +33,7 @@ export function SiteHeader() {
             <Link href="/dashboard">Dashboard</Link>
           </Button>
           <Button asChild size="sm" className="hidden sm:inline-flex">
-            <Link href="/#scan">Analyse something</Link>
+            <Link href="/#scan">Analyze something</Link>
           </Button>
           <Dialog.Root open={open} onOpenChange={setOpen}>
             <Dialog.Trigger asChild>
@@ -60,7 +60,7 @@ export function SiteHeader() {
                   ))}
                 </nav>
                 <Button asChild className="mt-3 w-full" size="lg" onClick={() => setOpen(false)}>
-                  <Link href="/#scan">Analyse something suspicious</Link>
+                  <Link href="/#scan">Analyze something suspicious</Link>
                 </Button>
               </Dialog.Content>
             </Dialog.Portal>

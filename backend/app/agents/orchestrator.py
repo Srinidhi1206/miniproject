@@ -113,7 +113,7 @@ class SentinelAgent:
             "ocr_reader": ("extract", "Reading text from image (OCR)", self._ocr_reader),
             "text_classifier": ("analyze", "Checking message for scam patterns", self._text_classifier),
             "url_extractor": ("extract", "Extracting links", self._url_extractor),
-            "url_analyzer": ("analyze", "Analysing link", self._url_analyzer),
+            "url_analyzer": ("analyze", "Analyzing link", self._url_analyzer),
             "upi_analyzer": ("analyze", "Inspecting UPI payment request", self._upi_analyzer),
             "qr_payload_describer": ("analyze", "Inspecting QR contents", self._qr_other),
         }
@@ -148,7 +148,7 @@ class SentinelAgent:
                 queue.extend(produced)
 
         if not ctx.components:
-            raise SentinelError("NO_CONTENT", "We couldn't find anything to analyse in that input.", 422,
+            raise SentinelError("NO_CONTENT", "We couldn't find anything to analyze in that input.", 422,
                                 hint="Try a clearer screenshot, or paste the message text directly.")
 
         ctx.stage("risk")
@@ -261,7 +261,7 @@ class SentinelAgent:
             engine = get_ocr_engine()
         except OCRUnavailable:
             ctx.record("ocr_reader", "extract", "Reading text from image (OCR)", t, status="failed", note="OCR engine unavailable")
-            ctx.limitations.append("Text recognition (OCR) is unavailable, so text in the image was not analysed.")
+            ctx.limitations.append("Text recognition (OCR) is unavailable, so text in the image was not analyzed.")
             return []
         result = engine.read(art.value)  # type: ignore[arg-type]
         if len(result.text.strip()) < 4:
@@ -321,7 +321,7 @@ class SentinelAgent:
         except SentinelError:
             if ctx.input_type == InputType.URL:
                 raise  # the user's own input is invalid -> tell them
-            ctx.record("url_analyzer", "analyze", "Analysing link", t, status="skipped", note="not a valid web link")
+            ctx.record("url_analyzer", "analyze", "Analyzing link", t, status="skipped", note="not a valid web link")
             return []
         ctx.extracted.urls.append(parsed.original)
         analysis = analyze_url(parsed)
@@ -348,7 +348,7 @@ class SentinelAgent:
         comp = risk.score_url(parsed.original[:200], analysis.model, evidence)
         ctx.components.append(comp)
         p = f"P(phishing)={analysis.model.probability:.2f}" if analysis.model else "rules only"
-        ctx.record("url_analyzer", "analyze", f"Analysing link {parsed.host}", t,
+        ctx.record("url_analyzer", "analyze", f"Analyzing link {parsed.host}", t,
                    note=f"{p}; {len([e for e in evidence if e.weight > 0])} risk signals" + ("; reputation checked" if rep and rep.checked else ""))
         return []
 
