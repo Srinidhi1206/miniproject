@@ -26,10 +26,11 @@ _INPUT_NOUN = {InputType.TEXT: "message", InputType.URL: "link", InputType.IMAGE
                InputType.QR: "QR code", InputType.AUDIO: "recording"}
 
 SYSTEM_PROMPT = (
-    "You explain scam-analysis results to ordinary people in India and elsewhere. "
-    "The risk verdict has ALREADY been decided by SENTINEL's models and rules; you must not change it, "
-    "soften it, or add new findings. Use only the evidence and guidance passages provided. "
-    "Write plainly, without jargon, markdown, or exclamation marks. Never claim certainty the evidence does not support."
+    "You explain scam-analysis results to ordinary people. "
+    "The risk verdict has ALREADY been decided deterministically; do not change it, soften it, or invent new findings. "
+    "Write plainly, without technical jargon, model names, probabilities, or exclamation marks. Be concise. "
+    "If the risk is LOW, state clearly that no warning signs were found, but note automated analysis cannot guarantee safety. "
+    "If HIGH or CRITICAL, clearly explain the strongest evidence without fear-mongering. Ground everything in the exact evidence provided."
 )
 
 
@@ -45,12 +46,12 @@ def _summary(level: RiskLevel, noun: str, components: list[ComponentScore], find
     top = components[0] if components else None
     parts: list[str] = []
     if level == RiskLevel.CRITICAL:
-        parts.append(f"This {noun} strongly matches known scam patterns. Treat it as a scam.")
+        parts.append(f"Critical risk. This {noun} strongly matches known scam patterns. Treat it as fraud.")
     elif level == RiskLevel.HIGH:
-        parts.append(f"This {noun} shows several patterns commonly used in scams. "
+        parts.append(f"High risk. This {noun} shows several patterns commonly used in scams. "
                      "Don't click, pay or reply until you've verified it independently.")
     elif level == RiskLevel.MEDIUM:
-        parts.append(f"We found {_plural(n, 'warning sign') if n else 'some warning signs'} in this {noun}. "
+        parts.append(f"Potentially suspicious. We found {_plural(n, 'warning sign') if n else 'some warning signs'} in this {noun}. "
                      "It may be genuine — verify it through an official channel before you act.")
     else:
         parts.append(f"SENTINEL didn't find warning signs in this {noun}. That doesn't guarantee it's safe — "
@@ -104,10 +105,12 @@ def explain(
     reassure_lines = "\n".join(f"- {e.label}" for e in reassurances[:4]) or "- none"
     passage_lines = "\n\n".join(f"[{c.title} — {c.section}]\n{c.text}" for c, _ in passages)
     prompt = (
-        f"Verdict (fixed): {level.value} risk, score {score}/100, for a {noun}.\n\n"
-        f"Evidence found by SENTINEL:\n{evidence_lines}\n\nReassuring signals:\n{reassure_lines}\n\n"
-        f"Trusted guidance passages:\n{passage_lines}\n\n"
-        "Write the summary and why_it_matters points for this user."
+        f"Verdict: {level.value} risk for a {noun}.\n\n"
+        f"Evidence detected:\n{evidence_lines}\n\nReassuring context:\n{reassure_lines}\n\n"
+        f"Trusted guidance:\n{passage_lines}\n\n"
+        "Task: Write a concise `summary` (1-2 sentences explaining the verdict and strongest evidence) "
+        "and `why_it_matters` (1-3 bullet points explaining the implications, without repeating the summary). "
+        "Do not mention scores, probabilities, or model names. Ground everything in the exact evidence provided."
     )
     out = llm.explain(SYSTEM_PROMPT, prompt)
     if out is None or not out.summary.strip():
