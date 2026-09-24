@@ -123,8 +123,18 @@ export function ReportForm() {
           <Textarea id={ids.desc} value={description} onChange={(e) => setDescription(e.target.value)} rows={6}
             placeholder="e.g. I got a WhatsApp message offering a part-time job. After two small payouts they asked me to deposit ₹5,000…"
             aria-invalid={!!errors.desc} required />
-          <FieldHint className="flex justify-between gap-4">
-            <span>Don&apos;t include your own phone number, account number or passwords.</span>
+          <div className="mt-2 text-xs text-muted">
+            <span className="font-semibold">Never include:</span>
+            <ul className="mt-1 list-inside list-disc opacity-90">
+              <li>OTPs</li>
+              <li>passwords</li>
+              <li>UPI PINs</li>
+              <li>card numbers</li>
+              <li>bank account credentials</li>
+              <li>government ID numbers</li>
+            </ul>
+          </div>
+          <FieldHint className="mt-2 flex justify-end">
             <span className="font-mono tabular-nums">{description.length}/{maxDesc}</span>
           </FieldHint>
           <FieldError>{errors.desc}</FieldError>
