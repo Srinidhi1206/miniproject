@@ -1,0 +1,39 @@
+{
+  "version": "20260924.1315",
+  "holdout": {
+    "n": 26216,
+    "accuracy": 0.7488,
+    "precision": 0.6137,
+    "recall": 0.6546,
+    "f1": 0.6335,
+    "roc_auc": 0.808,
+    "confusion": {
+      "tn": 13939,
+      "fp": 3583,
+      "fn": 3003,
+      "tp": 5691
+    }
+  },
+  "sanity_set": {
+    "n": 52,
+    "accuracy": 0.8462,
+    "precision": 0.75,
+    "recall": 1.0,
+    "f1": 0.8571,
+    "roc_auc": 1.0,
+    "confusion": {
+      "tn": 20,
+      "fp": 8,
+      "fn": 0,
+      "tp": 24
+    }
+  },
+  "data": {
+    "domains": 131076,
+    "phishing": 43468,
+    "by_source": {
+      "phiusiil": 103468,
+      "tranco": 27608
+    }
+  }
+}

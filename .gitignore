@@ -42,3 +42,5 @@ Thumbs.db
 .idea/
 .vscode/
 *.log
+!models/*.metrics.json
+!models/pipeline_evaluation.json

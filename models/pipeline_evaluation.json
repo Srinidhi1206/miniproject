@@ -1,0 +1,50 @@
+{
+  "urls_realistic_set": {
+    "scams": 24,
+    "scams_flagged_high": 24,
+    "scams_warned_medium": 0,
+    "scams_missed_low": 0,
+    "legit": 28,
+    "legit_cleared_low": 28,
+    "legit_warned_medium": 0,
+    "legit_false_alarm_high": 0,
+    "scam_detection_rate": 1.0,
+    "legit_false_alarm_rate": 0.0
+  },
+  "messages_curated_set (seen in training)": {
+    "scams": 103,
+    "scams_flagged_high": 103,
+    "scams_warned_medium": 0,
+    "scams_missed_low": 0,
+    "legit": 139,
+    "legit_cleared_low": 138,
+    "legit_warned_medium": 0,
+    "legit_false_alarm_high": 1,
+    "scam_detection_rate": 1.0,
+    "legit_false_alarm_rate": 0.007
+  },
+  "urls_unseen_popular_domains (Tranco 50,001-50,500)": {
+    "scams": 0,
+    "scams_flagged_high": 0,
+    "scams_warned_medium": 0,
+    "scams_missed_low": 0,
+    "legit": 500,
+    "legit_cleared_low": 388,
+    "legit_warned_medium": 109,
+    "legit_false_alarm_high": 3,
+    "scam_detection_rate": 0.0,
+    "legit_false_alarm_rate": 0.006
+  },
+  "urls_phiusiil_phishing_sample (domains mostly seen)": {
+    "scams": 300,
+    "scams_flagged_high": 69,
+    "scams_warned_medium": 184,
+    "scams_missed_low": 47,
+    "legit": 0,
+    "legit_cleared_low": 0,
+    "legit_warned_medium": 0,
+    "legit_false_alarm_high": 0,
+    "scam_detection_rate": 0.843,
+    "legit_false_alarm_rate": 0.0
+  }
+}
