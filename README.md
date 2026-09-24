@@ -69,7 +69,7 @@ models and deterministic rules. Full details: [`docs/architecture.md`](docs/arch
 | ML | scikit-learn, pandas, NumPy, joblib |
 | Vision | OpenCV (QR), RapidOCR / ONNX Runtime (OCR), Pillow |
 | RAG | FAISS, LSA embeddings (TF-IDF + SVD) · optional Anthropic Claude |
-| Testing | pytest (66 tests), Vitest + Testing Library, Playwright |
+| Testing | pytest (76 tests), Vitest + Testing Library, Playwright |
 
 ## 5. Folder structure
 
@@ -230,7 +230,7 @@ GET  /api/health
 ## 15. Testing
 
 ```bash
-cd backend && pytest                    # 66 tests: rules, models, risk engine, RAG, full API incl. OCR/QR
+cd backend && pytest                    # 76 tests: rules, models, risk engine, RAG, full API incl. OCR/QR
 cd frontend && npm test                 # 15 Vitest tests: stream parsing, errors, risk UI, validation, scanner
 cd frontend && npm run test:e2e         # 10 Playwright tests (desktop + mobile), needs both servers running
 python scripts/evaluate_pipeline.py     # system-level evaluation on labelled sets
@@ -264,6 +264,21 @@ full user content; rate limiting and restricted CORS are on by default.
 * Optional accounts for cross-device history; moderation queue for reports.
 * Browser extension and share-sheet integration on mobile.
 * Integration with official reporting (cybercrime.gov.in) where APIs allow.
+
+## 18. Recommended Demo Flow (3–5 minutes)
+
+For project evaluation, follow this sequence to demonstrate the full lifecycle:
+
+1. **Open SENTINEL**: Show the clean, no-login landing page and problem statement.
+2. **Main Scanner**: Switch to the "Scan" tab.
+3. **Analyze**: Submit a highly suspicious phishing SMS or UPI scam screenshot.
+4. **Risk Score**: Show the final 0–100 deterministic risk score (e.g., HIGH or CRITICAL).
+5. **Evidence**: Point out the specific extracted text, triggered rules, and the ML probability.
+6. **Explanation**: Show the plain-language RAG explanation and actionable Next Steps.
+7. **Report**: Click "Report this scam". Submit the fictional report anonymously.
+8. **Scam Map**: Open the Community Scam Map to show how the report safely aggregates by city and type without exposing the raw description or screenshot.
+9. **Your Checks**: Open the local History dashboard to show the persisted analysis.
+10. **Safety Center**: Briefly open the Safety Center to show the curated RAG knowledge base.
 
 ---
 
