@@ -120,7 +120,7 @@ export default function MapPage() {
 
       {/* Table view: the accessible, exact-number alternative to the map */}
       {data && (data.locations.length === 0 ? (
-        <EmptyState icon={MapIcon} title="No reports match these filters" body="Try a longer time period or a different scam type." />
+        <EmptyState icon={MapIcon} title="No scam reports in this area yet." body="That doesn't mean it's safe — stay cautious and verify suspicious requests. Try a longer time period or a different scam type to see broader trends." />
       ) : (
         <Card className="overflow-hidden">
           <details>

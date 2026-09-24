@@ -2,6 +2,7 @@
 @source "../components";
 @source "../features";
 @source "../lib";
+@source "../app";
 /* ==========================================================================
    SENTINEL design tokens
    Neutral paper + ink base. Colour is reserved for meaning:
