@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -15,7 +16,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api import analyze, community, health, history
 from app.core.config import BACKEND_DIR, get_settings
-from app.core.errors import register_error_handlers
+from app.core.errors import file_too_large, register_error_handlers
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("sentinel")
@@ -43,6 +44,38 @@ async def lifespan(_: FastAPI):
     yield
 
 
+class BodySizeLimit:
+    """Reject oversized request bodies BEFORE they are buffered.
+
+    Without this, the multipart parser spools the whole upload (e.g. 60 MB) to
+    disk before the endpoint can refuse it. Requests with a body must declare
+    Content-Length (browsers always do); chunked bodies without one get 411.
+    """
+
+    def __init__(self, app, max_bytes: int):
+        self.app = app
+        self.max_bytes = max_bytes
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or scope["method"] not in ("POST", "PUT", "PATCH"):
+            return await self.app(scope, receive, send)
+        headers = dict(scope["headers"])
+        declared = headers.get(b"content-length")
+        if declared is None and b"chunked" in headers.get(b"transfer-encoding", b"").lower():
+            return await self._reply(send, 411, {"error": {
+                "code": "LENGTH_REQUIRED", "message": "The upload must declare its size."}})
+        if declared is not None and declared.isdigit() and int(declared) > self.max_bytes:
+            return await self._reply(send, 413, file_too_large(get_settings().max_upload_mb).to_dict())
+        return await self.app(scope, receive, send)
+
+    @staticmethod
+    async def _reply(send, status: int, payload: dict):
+        body = json.dumps(payload).encode()
+        await send({"type": "http.response.start", "status": status,
+                    "headers": [(b"content-type", b"application/json"), (b"content-length", str(len(body)).encode())]})
+        await send({"type": "http.response.body", "body": body})
+
+
 class SecurityHeaders(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         response = await call_next(request)
@@ -61,6 +94,8 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
     app.add_middleware(SecurityHeaders)
+    # multipart overhead allowance on top of the file limit
+    app.add_middleware(BodySizeLimit, max_bytes=settings.max_upload_bytes + 256 * 1024)
     app.add_middleware(
         CORSMiddleware, allow_origins=settings.cors_origin_list, allow_credentials=False,
         allow_methods=["GET", "POST", "DELETE"], allow_headers=["Content-Type", "X-Sentinel-Client"],

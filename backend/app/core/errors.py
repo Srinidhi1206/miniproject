@@ -65,7 +65,11 @@ def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(RequestValidationError)
     async def _validation(_: Request, exc: RequestValidationError):
         # Summarise pydantic errors without echoing user input back.
-        fields = sorted({".".join(str(p) for p in e.get("loc", [])[1:]) or "body" for e in exc.errors()})
+        # Malformed JSON reports a character offset as its location; call that "body".
+        fields = sorted({
+            "body" if e.get("type") == "json_invalid" else (".".join(str(p) for p in e.get("loc", [])[1:]) or "body")
+            for e in exc.errors()
+        })
         return JSONResponse(
             {"error": {
                 "code": "INVALID_INPUT",
