@@ -230,11 +230,14 @@ GET  /api/health
 ## 15. Testing
 
 ```bash
-cd backend && pytest                    # 66 tests: rules, models, risk, RAG, full API incl. OCR/QR
-cd frontend && npm test                 # Vitest component & logic tests
-cd frontend && npx playwright test      # end-to-end journey (needs both servers running)
+cd backend && pytest                    # 66 tests: rules, models, risk engine, RAG, full API incl. OCR/QR
+cd frontend && npm test                 # 15 Vitest tests: stream parsing, errors, risk UI, validation, scanner
+cd frontend && npm run test:e2e         # 10 Playwright tests (desktop + mobile), needs both servers running
 python scripts/evaluate_pipeline.py     # system-level evaluation on labelled sets
 ```
+
+Playwright uses its bundled Chromium (`npx playwright install chromium`), or an
+installed browser via `PLAYWRIGHT_CHANNEL=msedge` / `chrome`.
 
 ## 16. Security & privacy
 
