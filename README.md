@@ -236,6 +236,13 @@ cd frontend && npm run test:e2e         # 10 Playwright tests (desktop + mobile)
 python scripts/evaluate_pipeline.py     # system-level evaluation on labelled sets
 ```
 
+The backend suite runs on SQLite by default; point it at an empty PostgreSQL
+database to test the production engine (verified on PostgreSQL 16):
+
+```bash
+TEST_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5432/sentinel_test pytest
+```
+
 Playwright uses its bundled Chromium (`npx playwright install chromium`), or an
 installed browser via `PLAYWRIGHT_CHANNEL=msedge` / `chrome`.
 

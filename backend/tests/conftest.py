@@ -7,7 +7,8 @@ import pytest
 
 # Isolated database + settings for the whole test session. Must run before app imports.
 _tmp = Path(tempfile.mkdtemp(prefix="sentinel-test-"))
-os.environ["DATABASE_URL"] = f"sqlite:///{(_tmp / 'test.db').as_posix()}"
+# Set TEST_DATABASE_URL to run the suite against PostgreSQL (use an empty, disposable database).
+os.environ["DATABASE_URL"] = os.environ.get("TEST_DATABASE_URL") or f"sqlite:///{(_tmp / 'test.db').as_posix()}"
 os.environ["RATE_LIMIT_PER_MINUTE"] = "1000"
 os.environ["LLM_PROVIDER"] = "none"
 os.environ["URL_REPUTATION_API_KEY"] = ""
