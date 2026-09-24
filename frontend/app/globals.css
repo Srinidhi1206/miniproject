@@ -156,3 +156,8 @@ body {
   border-radius: 8px;
   box-shadow: 0 6px 24px rgb(0 0 0 / 0.12);
 }
+
+/* OSM tiles are colourful; desaturate so category-neutral circles carry the data. */
+.sentinel-tiles {
+  filter: grayscale(1) contrast(0.88) brightness(1.06);
+}
