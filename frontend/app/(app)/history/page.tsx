@@ -51,9 +51,9 @@ export default function HistoryPageView() {
     <div className="space-y-6">
       <SectionHeading
         as="h1"
-        eyebrow="History"
-        title="Your analyses"
-        description="Stored against an anonymous ID for this browser. Only masked previews are kept."
+        eyebrow="Local history · No account required"
+        title="Your checks"
+        description="Review analyses saved on this device."
         action={total > 0 || filtered ? <ClearHistory onCleared={load} /> : undefined}
       />
 
@@ -69,9 +69,9 @@ export default function HistoryPageView() {
         <Select value={level} onChange={(e) => setLevel(e.target.value)} aria-label="Filter by risk">
           <option value="">All risk levels</option>
           <option value="CRITICAL">Critical</option>
-          <option value="HIGH">High</option>
-          <option value="MEDIUM">Medium</option>
-          <option value="LOW">Low</option>
+          <option value="HIGH">High risk</option>
+          <option value="MEDIUM">Potentially suspicious</option>
+          <option value="LOW">No warning signs</option>
         </Select>
         <Select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
           <option value="newest">Newest first</option>
@@ -88,9 +88,14 @@ export default function HistoryPageView() {
           <EmptyState icon={Search} title="No matching analyses" body="Try a different search term or clear the filters."
             action={<Button variant="secondary" onClick={() => { setQ(""); setType(""); setLevel(""); }}>Clear filters</Button>} />
         ) : (
-          <EmptyState icon={HistoryIcon} title="No analyses yet"
-            body="Submit your first suspicious message, URL, QR code, or screenshot to begin."
-            action={<Button asChild><Link href="/analyze">Analyze something</Link></Button>} />
+          <EmptyState icon={HistoryIcon} title="Nothing checked yet."
+            body="Analyze a message, link, screenshot or QR code and your recent checks will appear here."
+            action={
+              <div className="flex gap-2">
+                <Button asChild><Link href="/analyze">Analyze something</Link></Button>
+                <Button asChild variant="secondary"><Link href="/#how-it-works">How SENTINEL works</Link></Button>
+              </div>
+            } />
         )
       ) : (
         <Card className="overflow-hidden">

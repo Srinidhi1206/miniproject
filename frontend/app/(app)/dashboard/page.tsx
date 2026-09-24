@@ -69,9 +69,14 @@ export default function DashboardPage() {
             <EmptyState
               className="mt-4"
               icon={HistoryIcon}
-              title="No analyses yet"
-              body="Submit your first suspicious message, link, QR code or screenshot to begin."
-              action={<Button asChild><Link href="/analyze">Analyze something</Link></Button>}
+              title="Nothing checked yet."
+              body="Analyze a message, link, screenshot or QR code and your recent checks will appear here."
+              action={
+                <div className="flex gap-2">
+                  <Button asChild><Link href="/analyze">Analyze something</Link></Button>
+                  <Button asChild variant="secondary"><Link href="/#how-it-works">How SENTINEL works</Link></Button>
+                </div>
+              }
             />
           ) : (
             <ul className="mt-3 divide-y divide-line">
