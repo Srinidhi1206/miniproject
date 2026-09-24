@@ -1,5 +1,5 @@
 import {
-  ArrowRight, ArrowUpRight, Ban, BookOpenCheck, BrainCircuit, CircleDashed, FileSearch, Gauge, Map, MessageSquareText,
+  ArrowRight, ArrowUpRight, Ban, BookOpenCheck, BrainCircuit, CircleDashed, FileSearch, Flag, Gauge, History as HistoryIcon, Map, MessageSquareText,
   Route, ScanText,
 } from "lucide-react";
 import Link from "next/link";
@@ -225,23 +225,39 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* --------------------------------------------------------- community */}
+      {/* --------------------------------------------------------- ecosystem */}
       <section>
-        <div className="mx-auto grid max-w-6xl gap-px px-4 py-16 sm:px-6 md:grid-cols-2">
-          <Link href="/map" className="group flex flex-col justify-between gap-10 rounded-md border border-line bg-surface p-6 transition-colors hover:border-ink md:rounded-r-none">
+        <div className="mx-auto grid max-w-6xl gap-4 px-4 py-16 sm:px-6 md:grid-cols-2 lg:grid-cols-4">
+          <Link href="/map" className="group flex flex-col justify-between gap-10 rounded-md border border-line bg-surface p-6 transition-colors hover:border-ink">
             <Map className="size-6 text-ink" aria-hidden />
             <div>
-              <h3 className="text-xl font-semibold tracking-[-0.01em]">Community scam map</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted">See which scams are being reported where — aggregated by city, never by person.</p>
-              <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium">Explore the map <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden /></span>
+              <h3 className="text-lg font-semibold tracking-[-0.01em]">Scam Map</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">See what people are reporting around you. Aggregated by city.</p>
+              <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium">Explore Scam Map <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden /></span>
             </div>
           </Link>
-          <Link href="/safety" className="group flex flex-col justify-between gap-10 rounded-md border border-line bg-surface p-6 transition-colors hover:border-ink md:rounded-l-none md:border-l-0">
+          <Link href="/safety" className="group flex flex-col justify-between gap-10 rounded-md border border-line bg-surface p-6 transition-colors hover:border-ink">
             <BookOpenCheck className="size-6 text-ink" aria-hidden />
             <div>
-              <h3 className="text-xl font-semibold tracking-[-0.01em]">Safety Center</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted">Two-minute guides: UPI safety, job scams, QR codes, fake websites, digital arrest and more.</p>
-              <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium">Read the guides <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden /></span>
+              <h3 className="text-lg font-semibold tracking-[-0.01em]">Safety Center</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">Need help after a scam? Two-minute guides on what to do next.</p>
+              <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium">Open Safety Center <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden /></span>
+            </div>
+          </Link>
+          <Link href="/report" className="group flex flex-col justify-between gap-10 rounded-md border border-line bg-surface p-6 transition-colors hover:border-ink">
+            <Flag className="size-6 text-ink" aria-hidden />
+            <div>
+              <h3 className="text-lg font-semibold tracking-[-0.01em]">Report a scam</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">Found a scam? Report it anonymously and help others recognize the same pattern.</p>
+              <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium">Report a scam <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden /></span>
+            </div>
+          </Link>
+          <Link href="/dashboard" className="group flex flex-col justify-between gap-10 rounded-md border border-line bg-surface p-6 transition-colors hover:border-ink">
+            <HistoryIcon className="size-6 text-ink" aria-hidden />
+            <div>
+              <h3 className="text-lg font-semibold tracking-[-0.01em]">Your checks</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">Local history &middot; No account required. View past analyses.</p>
+              <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium">View history <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden /></span>
             </div>
           </Link>
         </div>
