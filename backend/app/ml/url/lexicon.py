@@ -52,6 +52,13 @@ BRANDS: dict[str, set[str]] = {
     "naukri": {"naukri.com"},
     "linkedin": {"linkedin.com"},
     "zerodha": {"zerodha.com"},
+    "yahoo": {"yahoo.com", "yahoo.co.in"},
+    "aol": {"aol.com"},
+    "chase": {"chase.com"},
+    "wellsfargo": {"wellsfargo.com"},
+    "docusign": {"docusign.com", "docusign.net"},
+    "dropbox": {"dropbox.com"},
+    "usps": {"usps.com"},
 }
 
 # Registered domains treated as well-known and legitimate. Only exact
@@ -85,7 +92,19 @@ FREE_HOSTING = {
     "blogspot.com", "000webhostapp.com", "ngrok.io", "ngrok-free.app", "herokuapp.com", "azurewebsites.net",
     "sites.google.com", "square.site", "carrd.co", "wordpress.com", "ipfs.io", "cloudflare-ipfs.com",
     "workers.dev", "onrender.com", "firebasestorage.googleapis.com", "r2.dev", "framer.website",
+    # tunnels, dynamic DNS and throwaway site builders
+    "duckdns.org", "loca.lt", "trycloudflare.com", "serveo.net", "no-ip.org", "ddns.net", "hopto.org",
+    "run.place", "weeblysite.com", "webwave.dev", "wixstudio.io", "mystrikingly.com", "tilda.ws",
+    "yolasite.com", "jimdosite.com", "webnode.page", "site123.me", "strikingly.com", "xsph.ru",
 }
+
+# Paths on otherwise-trusted platforms that host USER-CREATED content. The
+# platform is genuine but it does not vouch for the page, so no trust discount.
+USER_CONTENT = [
+    ("docs.google.com", "/forms"), ("forms.gle", ""), ("sites.google.com", ""), ("drive.google.com", ""),
+    ("forms.office.com", ""), ("onedrive.live.com", ""), ("1drv.ms", ""), ("dropbox.com", "/s"),
+    ("docs.google.com", "/presentation"), ("storage.googleapis.com", ""), ("github.io", ""),
+]
 
 SUSPICIOUS_TLDS = {
     "xyz", "top", "online", "site", "shop", "click", "live", "buzz", "icu", "tk", "ml", "ga", "cf", "gq",

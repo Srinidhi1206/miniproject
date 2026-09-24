@@ -44,7 +44,11 @@ def test_lookalike_domain_on_trusted_name_is_not_trusted():
     ("https://bit.ly/3xYz", "SHORTENER"),
     ("https://metamask-restore.web.app", "FREE_HOSTING"),
     ("https://example-shop.com/app/update.apk", "RISKY_DOWNLOAD"),
-    ("https://xn--pple-43d.com", "PUNYCODE"),
+    ("https://xn--pple-43d.com", "PUNYCODE"),                   # Cyrillic 'а' + Latin 'pple'
+    ("https://outlokentreprise.vastserve.com/login", "TYPOSQUAT"),  # misspelt brand inside a sub-domain
+    ("https://www.secure-l0gin.duckdns.org", "FREE_HOSTING"),
+    ("https://example.co/wp-includes/x/index.php?user=a@b.co", "EMAIL_IN_URL"),
+    ("https://docs.google.com/forms/d/e/abc/viewform", "USER_CONTENT_PAGE"),
     ("https://good.example.com@evil.xyz/", "AT_SYMBOL"),
 ])
 def test_url_rules(url, expected):
@@ -56,3 +60,9 @@ def test_url_model_ranks_phishing_above_legit():
     phish = analyze_url(parse_url("http://hdfc-netbanking-update.xyz")).model
     assert legit is not None and phish is not None
     assert phish.probability > legit.probability
+
+
+@pytest.mark.parametrize("url", ["https://mindbox.cloud", "https://amazingdeals.com", "https://www.office-depot.com",
+                                 "https://www.chaseadventures.com", "https://xn--80akiinbisaeq.xn--p1ai"])
+def test_common_words_and_idn_are_not_brand_attacks(url):
+    assert not codes(url) & {"TYPOSQUAT", "BRAND_IMPERSONATION", "PUNYCODE"}

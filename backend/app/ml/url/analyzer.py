@@ -17,13 +17,14 @@ from app.core.config import get_settings
 from app.ml.url.features import model_key
 from app.ml.url.lexicon import (
     ALLOWLIST, BRANDS, FREE_HOSTING, MESSAGING_DOMAINS, OFFICIAL_SUFFIXES, RISKY_EXTENSIONS,
-    SENSITIVE_KEYWORDS, SHORTENERS, SUSPICIOUS_TLDS,
+    SENSITIVE_KEYWORDS, SHORTENERS, SUSPICIOUS_TLDS, USER_CONTENT,
 )
 from app.ml.url.parsing import ParsedURL
 from app.schemas.analysis import Evidence, FeatureContribution, ModelOutput
 
 log = logging.getLogger("sentinel.ml.url")
 ARTIFACT = "url_host_lr.joblib"
+COMMON_WORD_BRANDS = {"chase", "apple", "office", "outlook", "meta"}
 _LEET = str.maketrans({"0": "o", "1": "l", "3": "e", "4": "a", "5": "s", "7": "t", "@": "a", "$": "s"})
 
 
@@ -73,6 +74,21 @@ def _lev(a: str, b: str) -> int:
     return prev[-1]
 
 
+def _mixed_script(host: str) -> bool:
+    """True if any decoded label mixes ASCII letters with non-ASCII letters (homograph attack)."""
+    for label in host.split("."):
+        if not label.startswith("xn--"):
+            continue
+        try:
+            decoded = label.encode("ascii").decode("idna")
+        except UnicodeError:
+            return True  # undecodable punycode is itself suspicious
+        letters = [c for c in decoded if c.isalpha()]
+        if any(c.isascii() for c in letters) and any(not c.isascii() for c in letters):
+            return True
+    return False
+
+
 def _ev(code, label, severity, weight, detail=None, excerpt=None) -> Evidence:
     return Evidence(code=code, label=label, severity=severity, weight=weight, source="url_rules",
                     detail=detail, excerpt=excerpt)
@@ -85,7 +101,13 @@ def url_rules(u: ParsedURL) -> tuple[list[Evidence], bool]:
     full_lower = (u.host + u.path + "?" + u.query).lower()
     on_free_host = any(host == fh or host.endswith("." + fh) for fh in FREE_HOSTING)
 
-    trusted = (not u.is_ip and not on_free_host and reg in ALLOWLIST and reg not in MESSAGING_DOMAINS)
+    user_content = any((host == h or host.endswith("." + h)) and u.path.lower().startswith(p) for h, p in USER_CONTENT)
+    trusted = (not u.is_ip and not on_free_host and not user_content
+               and reg in ALLOWLIST and reg not in MESSAGING_DOMAINS)
+    if user_content:
+        ev.append(_ev("USER_CONTENT_PAGE", f"User-created page on {host}", "medium", 8,
+                      "The platform is genuine, but anyone can publish forms or files on it — it doesn't vouch for "
+                      "this page. Never enter passwords or card details into a form someone sent you."))
     official = not u.is_ip and any(u.suffix == s or u.suffix.endswith("." + s) for s in OFFICIAL_SUFFIXES)
     if trusted:
         ev.append(_ev("KNOWN_DOMAIN", f"Recognised legitimate domain ({reg})", "positive", -40,
@@ -99,8 +121,13 @@ def url_rules(u: ParsedURL) -> tuple[list[Evidence], bool]:
         ev.append(_ev("IP_HOST", "Uses a raw IP address instead of a website name", "high", 18,
                       "Legitimate services use domain names. IP-address links hide who runs the site.", host))
     if "xn--" in host:
-        ev.append(_ev("PUNYCODE", "Uses look-alike (internationalised) characters", "high", 15,
-                      "Punycode can make a fake domain look identical to a real one, e.g. 'аpple.com' with a Cyrillic 'а'.", host))
+        if _mixed_script(host):
+            ev.append(_ev("PUNYCODE", "Mixes look-alike characters from different alphabets", "high", 15,
+                          "Mixing alphabets can make a fake domain look identical to a real one, e.g. 'аpple.com' "
+                          "with a Cyrillic 'а'.", host))
+        else:
+            ev.append(_ev("INTERNATIONAL_DOMAIN", "Uses a non-Latin (internationalised) domain name", "low", 3,
+                          "Normal for sites in other languages; just check it's the site you expect.", host))
     if "@" in u.normalised.split("//", 1)[-1].split("/")[0]:
         ev.append(_ev("AT_SYMBOL", "Contains '@', which hides the real destination", "high", 12,
                       "Browsers ignore everything before '@' in a link — the real site is after it."))
@@ -113,23 +140,45 @@ def url_rules(u: ParsedURL) -> tuple[list[Evidence], bool]:
                 break
             # Short brands (sbi, lic, jio) need word boundaries on both sides; longer
             # ones only at the start of a word ("axisbank", "hdfcnetbanking").
-            pattern = rf"(?<![a-z]){re.escape(brand)}" + (r"(?![a-z])" if len(brand) < 4 else "")
+            # Brands that are also ordinary words ("chase", "apple") need full word boundaries too.
+            whole_word = len(brand) < 4 or brand in COMMON_WORD_BRANDS
+            pattern = rf"(?<![a-z]){re.escape(brand)}" + (r"(?![a-z])" if whole_word else "")
             if re.search(pattern, host_l):
                 ev.append(_ev("BRAND_IMPERSONATION", f"Mentions '{brand}' but isn't {brand}'s official website", "critical", 22,
                               f"The official {brand} domains are {', '.join(sorted(domains))}. This link is on {reg}.", host))
                 break
         else:
-            label = u.domain.translate(_LEET)
+            # Typosquats anywhere in the host: every word-like token of the domain
+            # AND sub-domains ("outlokentreprise", "secured1-chaase") is compared
+            # with official brand labels.
+            tokens = {t for t in re.split(r"[.\-_0-9]+", host_l) if len(t) >= 4}
+            hit = None
             for brand, domains in BRANDS.items():
-                for d in domains:
-                    official_label = d.split(".")[0]
-                    if len(official_label) >= 5 and label != official_label and _lev(label, official_label) <= 1 + (len(official_label) > 7):
-                        ev.append(_ev("TYPOSQUAT", f"Look-alike of {d}", "critical", 22,
-                                      f"'{reg}' differs from the real '{d}' by only a character or two — a classic typosquatting trick.", host))
+                labels = {d.split(".")[0] for d in domains} | ({brand} if len(brand) >= 5 else set())
+                for official in labels:
+                    if len(official) < 5:
+                        continue
+                    tol = 1 + (len(official) > 7)
+                    for tok in tokens:
+                        if tok == official or tok[0] != official[0]:
+                            continue  # typosquats keep the first letter; avoids "cloud" vs "icloud"
+                        # whole-token misspelling ("chaase"), or a word that STARTS with the
+                        # brand minus one letter ("outlok" + "entreprise"). Substitutions are
+                        # only checked on whole tokens to avoid real words ("amazing").
+                        deletions = {official[:i] + official[i + 1:] for i in range(len(official))}
+                        near = _lev(tok, official) <= tol or (
+                            not tok.startswith(official) and tok[:len(official) - 1] in deletions)
+                        if near:
+                            hit = (official, sorted(domains)[0], tok)
+                            break
+                    if hit:
                         break
-                else:
-                    continue
-                break
+                if hit:
+                    break
+            if hit:
+                official, d, tok = hit
+                ev.append(_ev("TYPOSQUAT", f"Look-alike of {official} ('{tok}')", "critical", 22,
+                              f"'{tok}' is a misspelling of '{official}' — a classic trick to pass as {d}.", host))
 
     if reg in SHORTENERS or host in SHORTENERS:
         ev.append(_ev("SHORTENER", "Shortened link hides the real destination", "medium", 10,
@@ -138,7 +187,7 @@ def url_rules(u: ParsedURL) -> tuple[list[Evidence], bool]:
         ev.append(_ev("MESSAGING_LINK", "Opens a chat with an unknown WhatsApp/Telegram account", "low", 5,
                       "Links that move you into private chats are common in task-job and investment scams."))
     if on_free_host:
-        ev.append(_ev("FREE_HOSTING", "Hosted on a free website builder", "medium", 10,
+        ev.append(_ev("FREE_HOSTING", "Hosted on a free website builder or tunnel", "medium", 12,
                       "Free hosting platforms are legitimate, but are heavily abused for throwaway phishing pages.", host))
     if u.suffix.split(".")[-1] in SUSPICIOUS_TLDS and not trusted:
         ev.append(_ev("SUSPICIOUS_TLD", f"Uses a high-abuse domain ending (.{u.suffix})", "medium", 8,
@@ -167,6 +216,12 @@ def url_rules(u: ParsedURL) -> tuple[list[Evidence], bool]:
     if path_l.endswith(RISKY_EXTENSIONS):
         ev.append(_ev("RISKY_DOWNLOAD", "Downloads an app or program file", "critical", 20,
                       "Installing apps from links (especially .apk) can give criminals control of your phone and OTPs.", u.path[-40:]))
+    if re.search(r"[\w.+-]+@[\w-]+\.[\w.]+", u.path + "?" + u.query):
+        ev.append(_ev("EMAIL_IN_URL", "Link is personalised with an email address", "high", 12,
+                      "Phishing kits pre-fill the target's email so the fake login page looks tailored to you."))
+    if re.search(r"/wp-(?:includes|content|admin)/.*\.(?:php|html?)", path_l) and not trusted:
+        ev.append(_ev("COMPROMISED_SITE_PATH", "Page hidden inside a website's system folders", "medium", 10,
+                      "Login pages placed inside WordPress system folders usually mean a hacked site is hosting a phishing kit."))
     if re.search(r"(?:url|redirect|next|dest|goto|continue)=https?", u.query, re.I) or "//" in u.path[1:]:
         ev.append(_ev("EMBEDDED_REDIRECT", "Contains a redirect to another website", "medium", 8))
     if u.normalised.count("%") >= 6:
