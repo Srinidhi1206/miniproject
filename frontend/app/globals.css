@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   SENTINEL design tokens
+   Neutral paper + ink base. Colour is reserved for meaning:
+     safe (green) · warning (amber) · high (vermilion) · critical (crimson)
+   The SENTINEL "signal" accent (chartreuse) is used sparingly: logo mark,
+   focus rings and live/active states on dark console surfaces.
+   ========================================================================== */
+:root {
+  --paper: #f5f3ee;
+  --paper-2: #efece5;
+  --surface: #ffffff;
+  --surface-2: #faf9f6;
+  --line: #e2ded5;
+  --line-strong: #cfc9bd;
+  --ink: #15171b;
+  --ink-2: #2b2e35;
+  --muted: #62656d;
+  --faint: #8d9098;
+
+  --console: #17191e;
+  --console-2: #20232a;
+  --console-line: #30343d;
+  --console-text: #d9dbe0;
+  --console-muted: #8b909b;
+
+  --signal: #c6f24e;
+  --signal-ink: #3c4a0c;
+
+  --safe: #1d7a4c;
+  --safe-bg: #e5f1e9;
+  --safe-line: #b7d8c3;
+  --warn: #9a5a06;
+  --warn-bg: #fbefd7;
+  --warn-line: #efd29a;
+  --high: #b53a12;
+  --high-bg: #fbe6dc;
+  --high-line: #f0bda8;
+  --critical: #9b1230;
+  --critical-bg: #f8e0e5;
+  --critical-line: #e9aab8;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-console: var(--console);
+  --color-console-2: var(--console-2);
+  --color-console-line: var(--console-line);
+  --color-console-text: var(--console-text);
+  --color-console-muted: var(--console-muted);
+  --color-signal: var(--signal);
+  --color-signal-ink: var(--signal-ink);
+  --color-safe: var(--safe);
+  --color-safe-bg: var(--safe-bg);
+  --color-safe-line: var(--safe-line);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
+  --color-warn-line: var(--warn-line);
+  --color-high: var(--high);
+  --color-high-bg: var(--high-bg);
+  --color-high-line: var(--high-line);
+  --color-critical: var(--critical);
+  --color-critical-bg: var(--critical-bg);
+  --color-critical-line: var(--critical-line);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --animate-rise: rise 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-fade: fade 300ms ease-out both;
+  --animate-pulse-dot: pulse-dot 1.2s ease-in-out infinite;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv11";
+}
+
+::selection {
+  background: var(--signal);
+  color: var(--ink);
+}
+
+/* One consistent, highly visible focus style for keyboard users. */
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--signal);
+  border-radius: 4px;
+}
+
+/* Hairline grid texture used behind the hero (no gradients needed). */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--line) 70%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--line) 70%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.eyebrow {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Leaflet: match the product surfaces */
+.leaflet-container {
+  font-family: inherit;
+  background: var(--paper-2);
+}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.12);
+}
