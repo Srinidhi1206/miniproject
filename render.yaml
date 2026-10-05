@@ -42,6 +42,10 @@ services:
         value: "1"
       - key: OPENBLAS_NUM_THREADS
         value: "1"
+      # glibc creates a malloc arena per thread; cap them so worker threads can't
+      # multiply resident memory past the 512 MB limit (OCR OOM, Oct 2026).
+      - key: MALLOC_ARENA_MAX
+        value: "2"
       # Optional secrets — Render asks for them during setup; leave empty to skip.
       - key: URL_REPUTATION_API_KEY
         sync: false

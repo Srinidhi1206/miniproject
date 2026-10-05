@@ -101,7 +101,16 @@ class RapidOCREngine:
         # OOM-killed. Measured on a 1080x2400 screenshot: peak 351 -> 175 MB with
         # identical (better-spaced) recognised text. Recognition still crops from
         # the full-resolution image.
-        self._engine = RapidOCR(det_limit_type="max", det_limit_side_len=960)
+        #
+        # One ONNX Runtime thread per model. The default (-1) gives EACH of the three
+        # OCR models (detector, angle classifier, recogniser) its own thread pool
+        # sized to the host's CPU count; on Linux every pool thread grows its own
+        # malloc arena on first inference, so memory scales with threads x models,
+        # not image size. On Render's 512 MB instance even a 320x80 image was
+        # OOM-killed ("Ran out of memory (used over 512MB)"). OMP_NUM_THREADS does
+        # not affect ONNX Runtime's own pools. Locally: +33 threads -> +0, same text.
+        self._engine = RapidOCR(det_limit_type="max", det_limit_side_len=960,
+                                intra_op_num_threads=1, inter_op_num_threads=1)
         self._lock = threading.Lock()  # onnxruntime sessions are not re-entrant here
 
     def read(self, image: Image.Image) -> OCRResult:
