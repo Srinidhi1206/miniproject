@@ -43,3 +43,7 @@ next-env.d.ts
 # testing
 /test-results/
 /playwright-report/
+
+# ad-hoc UI screenshots / capture scripts (keep out of git)
+/*.png
+/screenshot.mjs
