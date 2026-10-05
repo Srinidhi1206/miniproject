@@ -99,3 +99,17 @@ infrastructure.
 `DATABASE_URL` selects the engine.
 **Why.** The project must run on a laptop with no services installed, while the
 deployment target is PostgreSQL.
+
+## ADR-013 — Render (native Python) + PostgreSQL for production; models committed
+**Decision.** Deploy the API with a Render Blueprint (`render.yaml`) using Render's
+native Python runtime and a Render PostgreSQL database; the frontend stays on
+Vercel. The two trained models (~1.8 MB) are committed to the repository.
+**Why.** The native runtime runs the same `pip install` / `uvicorn` commands that
+are verified locally (no Docker build needed). Render's disk is ephemeral, so
+SQLite would lose data on every deploy — PostgreSQL keeps history and reports.
+Building from GitHub needs the model files present; retraining during the build
+would add minutes and memory pressure for no benefit.
+**Consequences.** Free tier: the service sleeps after 15 idle minutes (cold start
+up to ~1 min), the free database expires after 30 days, and report screenshots
+on local disk are not persistent. The Vercel build refuses to run without a
+non-localhost `NEXT_PUBLIC_API_URL`, so a missing setting can't silently ship.

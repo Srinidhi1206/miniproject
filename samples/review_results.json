@@ -66,9 +66,9 @@
       "SENSITIVE_DATA",
       "ACCOUNT_THREAT",
       "TEXT_MODEL_MATCH",
-      "URL_MODEL_MATCH",
       "SENSITIVE_KEYWORDS",
       "URGENCY",
+      "URL_MODEL_MATCH",
       "NO_HTTPS",
       "HYPHENATED_HOST",
       "GENERIC_GREETING"
@@ -113,9 +113,9 @@
     "risk_level": "HIGH",
     "risk_score": 78,
     "findings": [
-      "URL_MODEL_MATCH",
       "TEXT_MODEL_MATCH",
       "SUSPICIOUS_TLD",
+      "URL_MODEL_MATCH",
       "NO_HTTPS",
       "HYPHENATED_HOST"
     ],
@@ -160,8 +160,8 @@
     "risk_score": 83,
     "findings": [
       "BRAND_IMPERSONATION",
-      "URL_MODEL_MATCH",
       "SENSITIVE_KEYWORDS",
+      "URL_MODEL_MATCH",
       "NO_HTTPS"
     ],
     "error": null
@@ -175,9 +175,9 @@
     "risk_score": 100,
     "findings": [
       "BRAND_IMPERSONATION",
-      "URL_MODEL_MATCH",
       "SENSITIVE_KEYWORDS",
       "SUSPICIOUS_TLD",
+      "URL_MODEL_MATCH",
       "HYPHENATED_HOST"
     ],
     "error": null
@@ -190,8 +190,8 @@
     "risk_level": "MEDIUM",
     "risk_score": 57,
     "findings": [
-      "URL_MODEL_MATCH",
-      "SHORTENER"
+      "SHORTENER",
+      "URL_MODEL_MATCH"
     ],
     "error": null
   },
@@ -204,8 +204,8 @@
     "risk_score": 93,
     "findings": [
       "RISKY_DOWNLOAD",
-      "URL_MODEL_MATCH",
       "SUSPICIOUS_TLD",
+      "URL_MODEL_MATCH",
       "NO_HTTPS",
       "HYPHENATED_HOST"
     ],
@@ -232,9 +232,7 @@
     "status": 200,
     "risk_level": "LOW",
     "risk_score": 2,
-    "findings": [
-      "QR_URL"
-    ],
+    "findings": [],
     "error": null
   },
   {
@@ -246,12 +244,11 @@
     "risk_score": 100,
     "findings": [
       "BRAND_IMPERSONATION",
-      "URL_MODEL_MATCH",
       "SENSITIVE_KEYWORDS",
       "SUSPICIOUS_TLD",
+      "URL_MODEL_MATCH",
       "NO_HTTPS",
-      "HYPHENATED_HOST",
-      "QR_URL"
+      "HYPHENATED_HOST"
     ],
     "error": null
   },
@@ -265,8 +262,7 @@
     "findings": [
       "UPI_BAIT_NOTE",
       "UPI_PRESET_AMOUNT",
-      "UPI_PERSONAL_PAYEE",
-      "UPI_PAYMENT_QR"
+      "UPI_PERSONAL_PAYEE"
     ],
     "error": null
   },
@@ -309,10 +305,10 @@
     "findings": [
       "ACCOUNT_THREAT",
       "TEXT_MODEL_MATCH",
-      "URL_MODEL_MATCH",
       "URGENCY",
       "SUSPICIOUS_TLD",
       "SENSITIVE_KEYWORDS",
+      "URL_MODEL_MATCH",
       "NO_HTTPS",
       "HYPHENATED_HOST"
     ],
