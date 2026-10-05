@@ -34,7 +34,7 @@ export function SiteFooter() {
             <li><Link href="/analyze" className="hover:text-ink">Analyze</Link></li>
             <li><Link href="/safety" className="hover:text-ink">Safety Center</Link></li>
             <li><Link href="/map" className="hover:text-ink">Scam map</Link></li>
-            <li><Link href="/settings" className="hover:text-ink">Privacy &amp; system status</Link></li>
+            <li><Link href="/settings" className="hover:text-ink">Privacy &amp; protection</Link></li>
           </ul>
         </div>
       </div>
