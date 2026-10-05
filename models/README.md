@@ -1,6 +1,8 @@
 # Models
 
-Model binaries are **not committed** (see `.gitignore`). Recreate them:
+The two baseline models (`text_scam_lr.joblib`, ~0.5 MB, and `url_host_lr.joblib`,
+~1.3 MB) **are committed**, so a deployment built straight from GitHub runs the
+real ML models. Any other model files are git-ignored. To retrain (overwrites them):
 
 ```bash
 python scripts/fetch_datasets.py          # once

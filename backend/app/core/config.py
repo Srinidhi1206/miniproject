@@ -33,7 +33,11 @@ class Settings(BaseSettings):
     sentinel_env: str = "development"
 
     database_url: str = ""
+    # Exact origins allowed to call the API from a browser (comma-separated).
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+    # Optional regex for extra origins, e.g. Vercel preview deployments:
+    #   ^https://miniproject-[a-z0-9-]+-<your-vercel-team>\.vercel\.app$
+    cors_origin_regex: str = ""
 
     max_upload_mb: int = Field(default=8, ge=1, le=50)
     max_text_chars: int = 10_000
@@ -58,7 +62,7 @@ class Settings(BaseSettings):
     @property
     def resolved_database_url(self) -> str:
         if self.database_url:
-            return self.database_url
+            return normalise_database_url(self.database_url)
         self.var_dir.mkdir(parents=True, exist_ok=True)
         return f"sqlite:///{(self.var_dir / 'sentinel.db').as_posix()}"
 
@@ -73,6 +77,17 @@ class Settings(BaseSettings):
     @property
     def is_dev(self) -> bool:
         return self.sentinel_env.lower() in {"dev", "development", "local"}
+
+
+def normalise_database_url(url: str) -> str:
+    """Hosting providers (Render, Heroku, Neon) hand out `postgres://` or
+    `postgresql://` URLs. SQLAlchemy needs the driver named explicitly; SENTINEL
+    uses psycopg 3, so rewrite the scheme. Other URLs are returned unchanged."""
+    url = url.strip()
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix):]
+    return url
 
 
 @lru_cache

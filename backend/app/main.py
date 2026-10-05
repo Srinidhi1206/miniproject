@@ -97,7 +97,8 @@ def create_app() -> FastAPI:
     # multipart overhead allowance on top of the file limit
     app.add_middleware(BodySizeLimit, max_bytes=settings.max_upload_bytes + 256 * 1024)
     app.add_middleware(
-        CORSMiddleware, allow_origins=settings.cors_origin_list, allow_credentials=False,
+        CORSMiddleware, allow_origins=settings.cors_origin_list,
+        allow_origin_regex=settings.cors_origin_regex or None, allow_credentials=False,
         allow_methods=["GET", "POST", "DELETE"], allow_headers=["Content-Type", "X-Sentinel-Client"],
     )
     register_error_handlers(app)

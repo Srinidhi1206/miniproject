@@ -31,6 +31,10 @@ data/processed/*
 !data/processed/.gitkeep
 models/*
 !models/README.md
+# The two shipped baseline models are small (~1.8 MB total) and are committed so a
+# deployment built from GitHub has the real ML models. Retraining overwrites them.
+!models/text_scam_lr.joblib
+!models/url_host_lr.joblib
 backend/var/
 *.db
 *.sqlite3

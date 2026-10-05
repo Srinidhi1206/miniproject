@@ -1,0 +1,56 @@
+# Render Blueprint for the SENTINEL FastAPI backend + PostgreSQL.
+# Render dashboard → New → Blueprint → select this repository.
+# The frontend is deployed separately on Vercel (see README → Production deployment).
+
+services:
+  - type: web
+    name: sentinel-api
+    runtime: python
+    plan: free
+    region: singapore
+    branch: main
+    buildCommand: pip install --upgrade pip && pip install -r backend/requirements.txt
+    # --proxy-headers (+ FORWARDED_ALLOW_IPS below): Render's load balancer sets
+    # X-Forwarded-For, so the rate limiter sees each visitor's IP, not the proxy's.
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SENTINEL_ENV
+        value: production
+      - key: FORWARDED_ALLOW_IPS
+        value: "*"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sentinel-db
+          property: connectionString
+      # Exact browser origins allowed to call the API (no wildcard).
+      - key: CORS_ORIGINS
+        value: https://miniproject-sage-rho.vercel.app,http://localhost:3000
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "30"
+      - key: MAX_UPLOAD_MB
+        value: "8"
+      - key: SEED_DEMO
+        value: "1"
+      - key: LLM_PROVIDER
+        value: none
+      # Keep the ML/OCR libraries to one thread each: fits the 512 MB free instance.
+      - key: OMP_NUM_THREADS
+        value: "1"
+      - key: OPENBLAS_NUM_THREADS
+        value: "1"
+      # Optional secrets — Render asks for them during setup; leave empty to skip.
+      - key: URL_REPUTATION_API_KEY
+        sync: false
+      - key: LLM_API_KEY
+        sync: false
+
+databases:
+  - name: sentinel-db
+    plan: free
+    region: singapore
+    databaseName: sentinel
+    user: sentinel
