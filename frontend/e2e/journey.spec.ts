@@ -20,7 +20,7 @@ test("message scan: from landing page to explained result", async ({ page }) => 
 
   await page.waitForURL(/\/analysis\/[0-9a-f]{32}/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(/scam/i);
-  await expect(page.getByText(/Critical risk|High risk/)).toBeVisible();
+  await expect(page.getByText(/^(Critical risk|High risk)$/)).toBeVisible();
   await expect(page.getByText("What SENTINEL found")).toBeVisible();
   await expect(page.getByText(/UPI PIN/).first()).toBeVisible();
   await expect(page.getByText("What you should do")).toBeVisible();

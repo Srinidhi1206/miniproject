@@ -4,6 +4,8 @@ import type {
   ReportOptions, ReportReceipt, ScamMapData, StreamEvent,
 } from "@/types/api";
 
+// Inlined at build time. The localhost fallback is for local development only;
+// Vercel builds refuse to proceed without a real URL — see next.config.ts.
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/$/, "");
 
 export class ApiError extends Error {
@@ -21,7 +23,7 @@ export class ApiError extends Error {
 const NETWORK_ERROR: ApiErrorBody = {
   code: "NETWORK",
   message: "SENTINEL's analysis service can't be reached right now.",
-  hint: "Check your connection and try again in a moment.",
+  hint: "Check your connection and try again. If the service was idle, it can take up to a minute to wake up.",
 };
 
 async function toApiError(res: Response): Promise<ApiError> {
