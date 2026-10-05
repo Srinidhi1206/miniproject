@@ -95,7 +95,13 @@ class RapidOCREngine:
 
     def __init__(self):
         from rapidocr_onnxruntime import RapidOCR  # heavy import, deferred
-        self._engine = RapidOCR()
+        # Cap the text DETECTOR's longest side at 960 px (PaddleOCR's own default).
+        # The library default ("min" side >= 736) upscales phone screenshots, and one
+        # OCR call peaked at ~350 MB — enough to get the 512 MB Render instance
+        # OOM-killed. Measured on a 1080x2400 screenshot: peak 351 -> 175 MB with
+        # identical (better-spaced) recognised text. Recognition still crops from
+        # the full-resolution image.
+        self._engine = RapidOCR(det_limit_type="max", det_limit_side_len=960)
         self._lock = threading.Lock()  # onnxruntime sessions are not re-entrant here
 
     def read(self, image: Image.Image) -> OCRResult:
