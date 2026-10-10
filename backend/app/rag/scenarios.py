@@ -10,7 +10,10 @@ from __future__ import annotations
 import re
 
 _TEXT_SCENARIOS: dict[str, re.Pattern] = {
-    "renewal": re.compile(r"\b(?:renew\w*|subscription|recharge|expir\w*|(?:bill|payment|premium)\s+(?:is\s+)?due|due\s+(?:date|on))\b", re.I),
+    # A bare "expired" is not a renewal: "Your KYC has expired" is a scam pretext and "your card will expire"
+    # comes with a replacement, so expiry only counts next to something that is actually renewed.
+    "renewal": re.compile(r"\b(?:renew\w*|subscription|recharge|(?:bill|payment|premium)\s+(?:is\s+)?due|due\s+(?:date|on))\b"
+                          r"|\b(?:plan|pack|membership|validity|policy)\b[^.\n]{0,40}\bexpir\w*", re.I),
     "kyc": re.compile(r"\b(?:re-?)?kyc\b", re.I),
     "otp": re.compile(r"\botp\b|\bone[\s-]?time\s+password\b|\bverification\s+code\b", re.I),
     "job": re.compile(r"\b(?:job|recruit\w*|hiring|offer\s+letter|work\s+from\s+home|part[\s-]?time)\b", re.I),
@@ -19,6 +22,8 @@ _TEXT_SCENARIOS: dict[str, re.Pattern] = {
 
 def detect_scenarios(text: str | None, qr_payload_kind: str | None = None) -> set[str]:
     found = {name for name, rx in _TEXT_SCENARIOS.items() if text and rx.search(text)}
+    if "kyc" in found:
+        found.discard("renewal")  # "KYC expired, renew it" is the KYC pretext, not a subscription
     if qr_payload_kind == "url":
         found.add("qr_link")
     elif qr_payload_kind == "upi":

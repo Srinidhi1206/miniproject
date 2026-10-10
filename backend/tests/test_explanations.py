@@ -149,6 +149,7 @@ def test_scam_screenshot_gets_protective_steps_for_its_threat(client):
     ids = [x["id"] for x in body["recommendations"]]
     assert body["risk_level"] in {"HIGH", "CRITICAL"}
     assert ids[0] == "no_otp" and "kyc_official" in ids and "already_paid" in ids
+    assert "renew_official" not in ids  # "KYC has expired" is not a subscription renewal
 
 
 # ------------------------------------------------------------------------ QR
@@ -156,8 +157,23 @@ def test_qr_link_explains_it_was_not_opened(client):
     body = client.post("/api/analyze/qr", files={"file": ("q.png", qr_png("http://sbi-kyc-verify.co/update"), "image/png")}).json()
     ids = [x["id"] for x in body["recommendations"]]
     assert body["risk_level"] in {"HIGH", "CRITICAL"}
-    assert "qr_check_destination" in ids and "no_click" in ids
+    assert "qr_check_destination" in ids
+    assert "no_click" not in ids  # would repeat "don't open" (found in live review)
     assert any("without opening it" in w for w in body["explanation"]["why_it_matters"])
+
+
+@pytest.mark.parametrize("text", [
+    "URGENT: Your Paytm KYC has expired. Your wallet will be blocked today. Share the OTP sent to your phone.",
+    "Your SBI card ending 1234 will expire on 31/10/2026. A replacement card has been dispatched to your registered address.",
+])
+def test_expiry_alone_is_not_a_renewal(text):
+    """Found in live review: 'KYC has expired' and a card-replacement notice were told to 'renew via the official app'."""
+    assert "renew_official" not in rec_ids(run(InputType.TEXT, text))
+
+
+def test_plan_expiry_is_a_renewal():
+    r = run(InputType.TEXT, "Your Jio plan expires on 12 Oct. Recharge to continue enjoying unlimited calls.")
+    assert "renew_official" in rec_ids(r)
 
 
 def test_upi_qr_explains_payment_direction(client):

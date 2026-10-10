@@ -120,5 +120,7 @@ def recommend(level: RiskLevel, findings: list[Evidence], has_risky_url: bool,
         add("stay_alert")
     if any(rid in ids for rid in _SCENARIO_RECS.values()):
         ids = [r for r in ids if r != "verify_official"]
+    if "qr_check_destination" in ids:  # the QR-specific step already says not to open the link
+        ids = [r for r in ids if r != "no_click"]
     recs = [_CATALOG[i] for i in ids]
     return sorted(recs, key=lambda r: _PRIORITY[r.priority])[:7]
