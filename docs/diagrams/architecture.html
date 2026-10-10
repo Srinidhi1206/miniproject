@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SENTINEL architecture diagrams</title>
+<!-- Source for docs/images/architecture/*.png — rendered with scripts/capture_docs.cjs -->
+<style>
+  :root { --paper:#f5f3ee; --surface:#fff; --line:#d9d4c9; --ink:#15171b; --ink2:#2b2e35; --muted:#62656d;
+          --console:#17191e; --signal:#c6f24e; --safe:#1d7a4c; --warn:#9a5a06; --high:#b53a12; --crit:#9b1230; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); font: 14px/1.4 "Segoe UI", system-ui, sans-serif; color: var(--ink); }
+  .fig { width: 1400px; padding: 36px 40px 40px; background: var(--paper); margin-bottom: 40px; }
+  .fig h1 { margin: 0 0 4px; font-size: 26px; letter-spacing: -.02em; }
+  .fig .sub { margin: 0 0 26px; color: var(--muted); font-size: 14px; }
+  .eyebrow { font: 600 11px/1 Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .box { background: var(--surface); border: 1.5px solid var(--ink); border-radius: 8px; padding: 12px 14px; }
+  .box.soft { border-color: var(--line); }
+  .box.dark { background: var(--console); color: #e6e8ec; border-color: var(--console); }
+  .box.dark .eyebrow { color: #9aa0ab; }
+  .box h3 { margin: 6px 0 4px; font-size: 15px; }
+  .box p { margin: 0; color: var(--muted); font-size: 12.5px; }
+  .box.dark p { color: #b9bec8; }
+  code, .mono { font-family: Consolas, monospace; font-size: 12px; }
+  .chip { display: inline-block; font: 11.5px Consolas, monospace; background: #efece5; border: 1px solid var(--line);
+          border-radius: 4px; padding: 2px 6px; margin: 3px 3px 0 0; color: var(--ink2); }
+  .dark .chip { background: #262a32; border-color: #363b45; color: #e6e8ec; }
+  .chip.sig { background: var(--signal); border-color: var(--signal); color: var(--ink); }
+  .row { display: flex; align-items: stretch; gap: 0; }
+  .arrow { display: flex; align-items: center; justify-content: center; min-width: 56px; color: var(--ink); font-size: 26px; }
+  .arrow small { display: block; font: 10.5px Consolas, monospace; color: var(--muted); text-align: center; }
+  .varrow { text-align: center; font-size: 24px; line-height: 1; margin: 6px 0; }
+  .legend { margin-top: 22px; display: flex; gap: 22px; color: var(--muted); font-size: 12.5px; flex-wrap: wrap; }
+  .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; }
+  .zone { border: 1.5px dashed var(--line); border-radius: 12px; padding: 16px; background: rgba(255,255,255,.35); }
+  .zone > .eyebrow { display: block; margin-bottom: 10px; }
+  table { border-collapse: collapse; font-size: 12.5px; }
+  td, th { border: 1px solid var(--line); padding: 4px 8px; text-align: left; }
+  th { background: #efece5; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ 1. SYSTEM / DEPLOYMENT -->
+<section class="fig" id="system">
+  <p class="eyebrow">Figure 1</p>
+  <h1>System &amp; deployment architecture</h1>
+  <p class="sub">Three-tier web application. The browser only talks to the FastAPI backend over HTTPS; every detection runs server-side.</p>
+
+  <div class="row">
+    <div class="box" style="width:210px">
+      <span class="eyebrow">Client</span>
+      <h3>User's browser</h3>
+      <p>Desktop or mobile. No account — an anonymous device ID is kept in <code>localStorage</code>.</p>
+      <div><span class="chip">React UI</span><span class="chip">NDJSON stream reader</span></div>
+    </div>
+    <div class="arrow"><div>→<small>HTTPS</small></div></div>
+
+    <div class="zone" style="width:300px">
+      <span class="eyebrow">Vercel · frontend</span>
+      <div class="box">
+        <h3>Next.js 15 (App Router)</h3>
+        <p>TypeScript · Tailwind CSS v4 · Radix UI · React Leaflet</p>
+        <div><span class="chip">Landing + scanner</span><span class="chip">Result report</span><span class="chip">Dashboard</span>
+             <span class="chip">History</span><span class="chip">Scam map</span><span class="chip">Report scam</span>
+             <span class="chip">Safety Center (SSR)</span><span class="chip">Settings</span></div>
+      </div>
+      <p style="margin:10px 2px 0;color:var(--muted);font-size:12px">Build-time <code>NEXT_PUBLIC_API_URL</code>; build fails if missing or localhost.</p>
+    </div>
+    <div class="arrow"><div>→<small>REST · CORS</small></div></div>
+
+    <div class="zone" style="flex:1">
+      <span class="eyebrow">Render · backend (Python 3.11, single uvicorn worker)</span>
+      <div class="box dark">
+        <span class="eyebrow">FastAPI application</span>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+          <div><b style="font-size:13px">API &amp; security layer</b>
+            <div><span class="chip">/api/analyze/*</span><span class="chip">/api/history</span><span class="chip">/api/reports</span>
+                 <span class="chip">/api/scam-map</span><span class="chip">/api/safety-guides</span><span class="chip">/api/health</span></div>
+            <p style="margin-top:6px">Validation · upload limits · rate limiting · CORS allow-list · friendly errors</p></div>
+          <div><b style="font-size:13px">Analysis core</b>
+            <div><span class="chip sig">SentinelAgent</span><span class="chip">Text ML</span><span class="chip">URL ML + rules</span>
+                 <span class="chip">OCR</span><span class="chip">QR</span><span class="chip">UPI</span><span class="chip">Risk engine</span><span class="chip">RAG explainer</span></div>
+            <p style="margin-top:6px">Models committed in <code>models/</code> · knowledge base in <code>backend/knowledge/</code></p></div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:12px;gap:12px">
+        <div class="box" style="flex:1"><span class="eyebrow">Render PostgreSQL</span><h3>Persistence</h3>
+          <p>analyses · evidence · model predictions · scam reports · locations · safety guides. Alembic migrations at startup.</p></div>
+        <div class="box soft" style="flex:1"><span class="eyebrow">External (optional)</span><h3>Google Safe Browsing v4</h3>
+          <p>URL string only — SENTINEL never opens links. Key stored as a Render secret.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><span class="sw" style="background:var(--console)"></span>Server-side analysis (no AI runs in the browser)</span>
+    <span><span class="sw" style="background:var(--signal)"></span>Orchestration agent</span>
+    <span>Map tiles: OpenStreetMap (loaded by the browser)</span>
+    <span>Local dev: same code on SQLite, <code>localhost:3000 → localhost:8000</code></span>
+  </div>
+</section>
+
+<!-- ============================================================ 2. AGENT PIPELINE -->
+<section class="fig" id="pipeline">
+  <p class="eyebrow">Figure 2</p>
+  <h1>Analysis pipeline — agentic orchestration</h1>
+  <p class="sub">The agent routes each artifact to specialist tools; tools may create new artifacts (OCR text, QR payload, links). Every tool call is traced and streamed to the UI.</p>
+
+  <div class="row">
+    <div class="box" style="width:170px"><span class="eyebrow">1 · Input</span><h3>Message · Link · Screenshot · QR</h3><p>JSON or multipart upload</p></div>
+    <div class="arrow">→</div>
+    <div class="box" style="width:190px"><span class="eyebrow">2 · Validate</span><h3>Input validation</h3><p>size cap before buffering · magic bytes · full image decode · URL parsing (no fetch)</p></div>
+    <div class="arrow">→</div>
+    <div class="box dark" style="flex:1">
+      <span class="eyebrow">3 · SentinelAgent — artifact queue &amp; routing table</span>
+      <table style="margin-top:8px;color:#e6e8ec;width:100%">
+        <tr><th style="background:#262a32;color:#e6e8ec;border-color:#363b45">Artifact</th><th style="background:#262a32;color:#e6e8ec;border-color:#363b45">Specialist tools</th><th style="background:#262a32;color:#e6e8ec;border-color:#363b45">May produce</th></tr>
+        <tr><td style="border-color:#363b45">image (screenshot)</td><td style="border-color:#363b45"><span class="chip">qr_scanner</span><span class="chip">ocr_reader</span></td><td style="border-color:#363b45">text · url · upi</td></tr>
+        <tr><td style="border-color:#363b45">qr_image</td><td style="border-color:#363b45"><span class="chip">qr_decoder</span></td><td style="border-color:#363b45">url · upi · text</td></tr>
+        <tr><td style="border-color:#363b45">text</td><td style="border-color:#363b45"><span class="chip">text_classifier</span><span class="chip">url_extractor</span></td><td style="border-color:#363b45">url</td></tr>
+        <tr><td style="border-color:#363b45">url</td><td style="border-color:#363b45"><span class="chip">url_analyzer</span><span class="chip">reputation (opt.)</span></td><td style="border-color:#363b45">—</td></tr>
+        <tr><td style="border-color:#363b45">upi</td><td style="border-color:#363b45"><span class="chip">upi_analyzer</span></td><td style="border-color:#363b45">—</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="varrow">↓ <span style="font-size:13px;color:var(--muted);vertical-align:4px">evidence + model probabilities (per component)</span></div>
+
+  <div class="row">
+    <div class="box" style="flex:1"><span class="eyebrow">4 · Risk engine</span><h3>Transparent 0–100 score</h3>
+      <p class="mono" style="color:var(--ink2)">text = 70·P(scam) + rules[−15,+30]<br>url = 55·P(phish) + rules[−45,+45]<br>final = max(components) + corroboration</p></div>
+    <div class="arrow">→</div>
+    <div class="box" style="flex:1"><span class="eyebrow">5 · Explanation (RAG)</span><h3>Grounded explanation</h3>
+      <p>Query from <b>found evidence</b> → FAISS search over 51 knowledge passages → plain-language "why it matters" + sources. Optional LLM rewrite can never change the verdict.</p></div>
+    <div class="arrow">→</div>
+    <div class="box" style="flex:1"><span class="eyebrow">6 · Result</span><h3>AnalysisResult</h3>
+      <p>verdict · score · level · findings with quotes · recommendations · technical breakdown · agent trace</p></div>
+    <div class="arrow">→</div>
+    <div class="box" style="width:200px"><span class="eyebrow">7 · Deliver &amp; store</span><h3>UI + PostgreSQL</h3>
+      <p>Live progress via NDJSON events; masked preview saved (no raw text/images)</p></div>
+  </div>
+
+  <div class="legend">
+    <span>Example (QR): <code>qr_decoder → upi_analyzer | url_analyzer → risk_engine → explanation_service</code></span>
+    <span>Example (screenshot): <code>qr_scanner → ocr_reader → text_classifier → url_extractor → url_analyzer</code></span>
+  </div>
+</section>
+
+<!-- ============================================================ 3. ML + RISK -->
+<section class="fig" id="ml">
+  <p class="eyebrow">Figure 3</p>
+  <h1>Detection models &amp; risk scoring</h1>
+  <p class="sub">Two supervised models estimate likelihood; named rules explain tactics; a documented formula combines both.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+    <div class="zone"><span class="eyebrow">Text scam classifier</span>
+      <div class="row">
+        <div class="box soft" style="flex:1"><h3>Data</h3><p>UCI SMS Spam (5,160) + curated India-specific set (242, ×3 weight)</p></div><div class="arrow">→</div>
+        <div class="box soft" style="flex:1"><h3>Normalise</h3><p>placeholders: <code>urltoken</code> <code>moneytoken</code> <code>phonetoken</code></p></div><div class="arrow">→</div>
+        <div class="box" style="flex:1.2"><h3>Model</h3><p>word 1–2 + char 3–5 TF-IDF → Logistic Regression</p></div>
+      </div>
+      <p style="margin:10px 2px 0;font-size:12.5px"><b>Hold-out:</b> F1 0.950 · ROC-AUC 0.991 · curated subset F1 0.909 &nbsp;|&nbsp; <b>+ 22 tactic rules</b> (OTP/PIN request, upfront fee, digital arrest…)</p>
+    </div>
+    <div class="zone"><span class="eyebrow">URL risk analyzer</span>
+      <div class="row">
+        <div class="box soft" style="flex:1"><h3>Data</h3><p>PhiUSIIL 235k URLs + Tranco top-30k popular domains</p></div><div class="arrow">→</div>
+        <div class="box soft" style="flex:1"><h3>Features</h3><p>registered domain only: char 2–5 grams + 11 lexical features</p></div><div class="arrow">→</div>
+        <div class="box" style="flex:1.2"><h3>Model + rules</h3><p>Logistic Regression + 20+ rules (brand look-alike, typosquat, IP, shortener, .apk…)</p></div>
+      </div>
+      <p style="margin:10px 2px 0;font-size:12.5px"><b>Domain hold-out</b> ROC-AUC 0.81 · <b>system:</b> 0.6% false HIGH on unseen popular sites · 84% of phishing URLs warned/flagged</p>
+    </div>
+  </div>
+
+  <div class="varrow">↓</div>
+  <div class="row" style="gap:14px">
+    <div class="box" style="flex:1.4"><span class="eyebrow">Risk engine (deterministic)</span>
+      <p class="mono" style="color:var(--ink2);font-size:12.5px;margin-top:6px">component score = model points + clamp(Σ rule weights) · documented floors (e.g. 2 critical tactics → ≥ 80)<br>
+      final = max(components) + 5 × (other components ≥ 50), capped at +10</p></div>
+    <div class="box" style="flex:1"><span class="eyebrow">Bands</span>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <div style="flex:3;background:var(--safe);color:#fff;padding:6px;border-radius:4px;font-size:12px"><b>LOW</b> 0–29</div>
+        <div style="flex:3;background:var(--warn);color:#fff;padding:6px;border-radius:4px;font-size:12px"><b>MEDIUM</b> 30–59</div>
+        <div style="flex:2;background:var(--high);color:#fff;padding:6px;border-radius:4px;font-size:12px"><b>HIGH</b> 60–79</div>
+        <div style="flex:2;background:var(--crit);color:#fff;padding:6px;border-radius:4px;font-size:12px"><b>CRITICAL</b> 80+</div>
+      </div></div>
+  </div>
+</section>
+
+<!-- ============================================================ 4. DATA MODEL -->
+<section class="fig" id="data">
+  <p class="eyebrow">Figure 4</p>
+  <h1>Data model (PostgreSQL)</h1>
+  <p class="sub">Privacy by design: no accounts, no raw message text, no scan images; report evidence is private and EXIF-stripped; the map exposes city-level aggregates only.</p>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start">
+    <div class="box"><span class="eyebrow">analyses</span>
+      <p class="mono" style="color:var(--ink2);margin-top:6px">id PK (random 128-bit)<br>created_at<br>client_id (anonymous device)<br>user_id (reserved, null)<br>input_type · channel<br>input_preview (numbers masked)<br>classification · risk_score · risk_level<br>confidence · result (JSON)</p></div>
+    <div>
+      <div class="box"><span class="eyebrow">analysis_evidence</span><p class="mono" style="color:var(--ink2);margin-top:6px">analysis_id FK → analyses (cascade)<br>code · label · severity · weight · source</p></div>
+      <div class="varrow" style="font-size:16px">⋮</div>
+      <div class="box"><span class="eyebrow">model_predictions</span><p class="mono" style="color:var(--ink2);margin-top:6px">analysis_id FK → analyses (cascade)<br>model_name · version · target<br>probability · label</p></div>
+    </div>
+    <div>
+      <div class="box"><span class="eyebrow">scam_reports</span><p class="mono" style="color:var(--ink2);margin-top:6px">public_id (SC-2026-00161)<br>scam_type · description (private)<br>amount_lost · is_demo<br>location_id FK → scam_locations<br>analysis_id FK (set null)<br>evidence_path (private)</p></div>
+      <div class="varrow" style="font-size:16px">⋮</div>
+      <div class="box"><span class="eyebrow">scam_locations · safety_guides</span><p class="mono" style="color:var(--ink2);margin-top:6px">41 cities (approx. coordinates)<br>12 guides (same text as RAG corpus)</p></div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

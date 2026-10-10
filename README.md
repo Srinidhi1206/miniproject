@@ -16,8 +16,9 @@ needed) and SENTINEL shows:
 |---|---|
 | **Live website** | https://miniproject-sage-rho.vercel.app/ |
 | **Frontend** | Next.js on Vercel (root directory `frontend/`) |
-| **Backend API** | FastAPI on Render — **not deployed yet**: follow [§19 Production deployment](#19-production-deployment), then record the URL here |
-| **API docs / health** | `<backend-url>/docs` · `<backend-url>/api/health` |
+| **Backend API** | FastAPI on Render — https://sentinel-api-ov6m.onrender.com |
+| **API docs / health** | [`/docs`](https://sentinel-api-ov6m.onrender.com/docs) · [`/api/health`](https://sentinel-api-ov6m.onrender.com/api/health) (free plan: allow up to a minute to wake) |
+| **Project documentation** | [Methodology](docs/methodology.md) · [Architecture](docs/architecture.md) · [ML pipeline](docs/ml-pipeline.md) · [API](docs/api.md) · [Design decisions](docs/decisions.md) · [Screenshots](#screenshots) |
 
 ---
 
@@ -64,7 +65,16 @@ Browser (Next.js) ──► FastAPI ──► Input validation ──► Sentine
 ```
 
 The agent **coordinates**; it never classifies. Verdicts come from supervised
-models and deterministic rules. Full details: [`docs/architecture.md`](docs/architecture.md).
+models and deterministic rules. Full details: [`docs/architecture.md`](docs/architecture.md);
+development and evaluation methodology: [`docs/methodology.md`](docs/methodology.md).
+
+| System & deployment | Analysis pipeline |
+|---|---|
+| ![System architecture](docs/images/architecture/01-system-architecture.png) | ![Analysis pipeline](docs/images/architecture/02-analysis-pipeline.png) |
+| **Models & risk engine** | **Data model** |
+| ![Models and risk engine](docs/images/architecture/03-models-and-risk-engine.png) | ![Data model](docs/images/architecture/04-data-model.png) |
+
+The figures are rendered from [`docs/diagrams/architecture.html`](docs/diagrams/architecture.html).
 
 ## 4. Tech stack
 
@@ -76,7 +86,7 @@ models and deterministic rules. Full details: [`docs/architecture.md`](docs/arch
 | ML | scikit-learn, pandas, NumPy, joblib |
 | Vision | OpenCV (QR), RapidOCR / ONNX Runtime (OCR), Pillow |
 | RAG | FAISS, LSA embeddings (TF-IDF + SVD) · optional Anthropic Claude |
-| Testing | pytest (154 tests), Vitest + Testing Library, Playwright |
+| Testing | pytest (154 tests), Vitest + Testing Library (18 tests), Playwright |
 
 ## 5. Folder structure
 
@@ -260,7 +270,7 @@ GET  /api/health
 
 ```bash
 cd backend && pytest                    # 154 tests: rules, models, risk engine, RAG, API incl. OCR/QR, prod config, FP calibration, explanations
-cd frontend && npm test                 # 15 Vitest tests: stream parsing, errors, risk UI, validation, scanner
+cd frontend && npm test                 # 18 Vitest tests: stream parsing, errors, risk UI, validation, scanner, settings
 cd frontend && npm run test:e2e         # 10 Playwright tests (desktop + mobile), needs both servers running
 python scripts/evaluate_pipeline.py     # system-level evaluation on labelled sets
 ```
@@ -274,6 +284,37 @@ TEST_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5432/sentinel_test py
 
 Playwright uses its bundled Chromium (`npx playwright install chromium`), or an
 installed browser via `PLAYWRIGHT_CHANNEL=msedge` / `chrome`.
+
+Latest results (rendered transcripts in [`docs/images/testing/`](docs/images/testing)):
+backend **154 passed** · frontend **18 passed** · typecheck/lint clean · production
+build OK · Playwright against the live site **5/5** · scenario review on production **25/25** ·
+production OCR verified (CRITICAL 100 in 7.3 s, service healthy throughout).
+
+<a id="screenshots"></a>
+### Screenshots
+
+All UI screenshots are taken from the **live deployment** with real analyses
+(nothing mocked). Full set: [`docs/images/ui/`](docs/images/ui).
+
+| Landing | Live analysis progress |
+|---|---|
+| ![Landing](docs/images/ui/01-landing.png) | ![Progress](docs/images/ui/04-live-analysis-progress.png) |
+| **Scam message result** | **Technical details (score breakdown, agent trace)** |
+| ![Scam result](docs/images/ui/05-result-scam-message.png) | ![Technical details](docs/images/ui/07-technical-details.png) |
+| **Suspicious link** | **QR code → UPI analysis** |
+| ![Link result](docs/images/ui/09-result-suspicious-link.png) | ![QR UPI](docs/images/ui/11-result-qr-upi.png) |
+| **Screenshot (OCR)** | **Scam map** |
+| ![OCR result](docs/images/ui/12-result-screenshot-ocr.png) | ![Scam map](docs/images/ui/17-scam-map.png) |
+| **Dashboard** | **Mobile result** |
+| ![Dashboard](docs/images/ui/15-dashboard.png) | <img src="docs/images/ui/23-mobile-result.png" width="260" alt="Mobile result"> |
+
+| Testing evidence | |
+|---|---|
+| ![pytest](docs/images/testing/01-backend-pytest.png) | ![Model metrics](docs/images/testing/08-model-evaluation-metrics.png) |
+
+Regenerate every image with [`scripts/capture_docs.cjs`](scripts/capture_docs.cjs)
+(modes `diagrams`, `testing <dir>`, `ui [url]`; run from `frontend/` with
+`NODE_PATH=node_modules`). The `ui` mode never submits a scam report.
 
 ## 16. Security & privacy
 
