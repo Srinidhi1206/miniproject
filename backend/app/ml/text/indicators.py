@@ -13,10 +13,34 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from app.ml.text.preprocess import EMAIL_RE, extract_urls
 from app.schemas.analysis import Evidence, Severity
 
-_NEGATION = re.compile(r"(?:never|not|n't|dont|don't|do not)\W+(?:\w+\W+){0,2}$", re.I)
+# Negation must not reach across clause punctuation: in "Don't worry, just share the OTP" the request is
+# NOT negated.
+_NEGATION = re.compile(r"(?:never|not|n't|dont|don't|do not)[^\w,;:.!?]+(?:\w+[^\w,;:.!?]+){0,2}$", re.I)
 _NEGATION_INSIDE = re.compile(r"\b(?:never|do not|don't|dont)\s+(?:share|send|tell|give|forward)\b", re.I)
+# A sentence that *describes* what scammers do ("Beware of fraudsters asking you to scan a QR code to
+# receive money") is a warning, not a request, so tactic rules must not fire on it. Deliberately narrow:
+# the tactic must be the object of a describing verb whose subject is the scammer. A bare "Be alert:" or
+# "Fraudsters may target you; share the OTP ..." does not qualify, because scammers write those too.
+_WARNING_FRAME = re.compile(
+    r"\b(?:fraudsters?|scammers?|criminals?|cheats?|fake\s+(?:callers?|agents?|officials?|apps?|websites?))\b"
+    r"(?:\s+who)?\s+(?:(?:may|might|will|often|can|usually)\s+)?"
+    r"(?:ask\w*|tell\w*|urg\w+|pressur\w+|trick\w*|convinc\w+|offer\w*|claim\w*|pretend\w*|send\w*|lure\w*)"
+    r"(?:\s+(?:you|people|victims|customers|users))?(?:\s+to)?(?:\s+\w+){0,4}\s+$",
+    re.I)
+# Ways a message can get the reader to act through a channel the sender controls. A message with none of
+# these and no named tactic cannot defraud anyone by itself, so the risk engine gives model similarity
+# less weight (see risk/engine.py, "uncorroborated text").
+_CALL_TO_ACTION = re.compile(
+    r"\b(?:click|tap|visit|open|log\s*-?\s*in|login|sign\s*-?\s*in|download|install|scan|call|dial|ring|sms|text|txt|"
+    r"texting|txting|rply|chat\s+(?:now|to)|whatsapp|reply|respond|send|pay|transfer|deposit|purchase|buy|order|"
+    r"register|apply|claim|redeem|verify|validate|update|confirm|share|submit|enter|contact|activate|unlock|join)\b",
+    re.I)
+# Negation for a call to action must sit directly on the verb ("do not scan", "never click any") and must not
+# reach across punctuation: in "If you did not authorise this, call us" the call is NOT negated.
+_CTA_NEGATION = re.compile(r"\b(?:never|not|n't|dont|don't|do\s+not|avoid)\s+(?:\w+\s+)?$", re.I)
 
 
 @dataclass(frozen=True)
@@ -60,7 +84,10 @@ RULES: list[Rule] = [
          _r(r"\b(?:cbi|cyber\s*(?:cell|police|crime\s+branch)|customs\s+(?:department|officer)|income\s+tax\s+(?:department|officer)|rbi\b|trai\b|narcotics|enforcement\s+directorate|police\s+officer|investigation\s+officer|mumbai\s+police|delhi\s+police)"),
          "Scammers impersonate authorities because fear makes people act without checking."),
     Rule("ACCOUNT_THREAT", "Threatens to block, suspend or disconnect your account or service", "high", 10,
-         _r(r"\b(?:account|a/c|card|sim|number|connection|wallet|kyc|fastag|netbanking|power|electricity|mailbox|membership|policy|service)\b[^.\n]{0,50}\b(?:block(?:ed)?|suspend(?:ed)?|deactivat\w*|frozen|freez\w*|clos(?:ed|e)|disconnect\w*|lock(?:ed)?|terminat\w*|blacklist\w*|delet(?:ed|e)|expir(?:ed|e|es)|lapsed|cut)\b"),
+         # A plain expiry or renewal date is ordinary service information, not a threat. Only KYC "expiry"
+         # (a common scam pretext: KYC does not expire) is treated as one.
+         _r(r"\b(?:account|a/c|card|sim|number|connection|wallet|kyc|fastag|netbanking|power|electricity|mailbox|membership|policy|service)\b[^.\n]{0,50}\b(?:block(?:ed)?|suspend(?:ed)?|deactivat\w*|frozen|freez\w*|clos(?:ed|e)|disconnect\w*|lock(?:ed)?|terminat\w*|blacklist\w*|delet(?:ed|e)|cut)\b"
+            r"|\bkyc\b[^.\n]{0,30}\b(?:expir(?:ed|e|es)|lapsed)\b"),
          "Threats of losing access create panic so you act before verifying. Real providers give written notice through official channels."),
     Rule("URGENCY", "Uses urgency or a tight deadline", "medium", 8,
          _r(r"\burgent(?:ly)?\b|\bimmediately\b|\bwithin\s+(?:numtoken|\d+|one|two|24|48)\s*(?:hours?|hrs?|minutes?|mins?)\b|\bin\s+(?:\d+|one|two)\s+(?:hours?|hrs?|minutes?)\b|\btoday\s+only\b|\blast\s+(?:warning|chance|notice|date)\b|\bfinal\s+(?:notice|warning|step)\b|\bbefore\s+midnight\b|\bact\s+now\b|\bright\s+now\b|\bhurry\b|\btonight\b|\bexpires?\s+today\b|\blimited\s+(?:seats|time|offer)\b|\bvalid\s+today\b"),
@@ -113,8 +140,15 @@ RULES: list[Rule] = [
 ]
 
 REASSURING_RULES: list[Rule] = [
+    Rule("PUBLIC_ADVISORY", "Reads like a safety advisory (warns about a risk or how to report fraud)", "positive", -6,
+         # Not "be careful/alert": scammers open with those too ("Be careful, your account will be blocked").
+         _r(r"\bbeware\s+of\b|\bmay\s+(?:lead\s+to|result\s+in)\b"
+            r"|\b(?:report|complain)\w*\b[^.\n]{0,40}(?:\b1930\b|cybercrime\.gov\.in|cyber\s*crime\s+portal)"),
+         "General warnings and advice on reporting fraud are typical of genuine safety notices, not of scams."),
     Rule("SAFETY_ADVICE", "Contains standard safety advice (e.g. 'never share your OTP')", "positive", -6,
-         _r(r"\b(?:do\s+not|never|don'?t)\s+share\b[^.\n]{0,25}\b(?:otp|pin|cvv|password)\b|\bnever\s+asks?\s+for\b"),
+         _r(r"\b(?:do\s+not|never|don'?t)\s+share\b[^.\n]{0,25}\b(?:otp|pin|cvv|password)\b|\bnever\s+asks?\s+for\b"
+            r"|\b(?:do\s+not|never|don'?t|avoid)\s+(?:scan|click|open|download|install|respond\s+to|reply\s+to|pay|call\s+back)\b"
+            r"[^.\n]{0,40}\b(?:unknown|unidentified|unverified|suspicious|unsolicited|untrusted|strangers?|random)\b"),
          "Genuine transactional messages usually warn you not to share codes."),
     Rule("OFFICIAL_CHANNEL", "Points you to the official app or website rather than a link", "positive", -4,
          _r(r"\b(?:in|via|from|using)\s+the\s+(?:official\s+)?(?:\w+\s+)?app\b|\bofficial\s+(?:website|portal|app)\b|\bcall\s+the\s+number\s+on\s+the\s+back\b"),
@@ -124,6 +158,34 @@ REASSURING_RULES: list[Rule] = [
 
 def _negated(text: str, start: int) -> bool:
     return bool(_NEGATION.search(text[max(0, start - 40):start]))
+
+
+def _in_warning(text: str, start: int) -> bool:
+    """True if the sentence leading up to `start` frames what follows as a warning about scammers."""
+    sentence_start = max(text.rfind(ch, 0, start) for ch in ".!?\n") + 1
+    return bool(_WARNING_FRAME.search(text[sentence_start:start]))
+
+
+def _official_link(raw: str) -> bool:
+    """A link to a recognised organisation or an official (gov.in, nic.in, ...) domain is not a channel a
+    scammer controls. It is still scored separately by the URL analyzer."""
+    from app.ml.url.analyzer import url_rules  # local import: the URL package is heavier and imports the model
+    from app.ml.url.parsing import parse_url
+    try:
+        evidence, trusted = url_rules(parse_url(raw))
+    except Exception:  # unparseable: treat as an ordinary link
+        return False
+    return trusted or any(e.code == "OFFICIAL_SUFFIX" for e in evidence)
+
+
+def has_call_to_action(text: str) -> bool:
+    """True if the message gives the reader a way to act through a channel the sender controls: a link that
+    isn't an official domain, an e-mail address, or an instruction such as click / call / reply / pay / scan
+    that isn't negated ("do not scan ...") or part of a warning."""
+    if any(not _official_link(u) for u in extract_urls(text)) or EMAIL_RE.search(text):
+        return True
+    return any(not _CTA_NEGATION.search(text[max(0, m.start() - 30):m.start()]) and not _in_warning(text, m.start())
+               for m in _CALL_TO_ACTION.finditer(text))
 
 
 def _excerpt(text: str, m: re.Match, pad: int = 18) -> str:
@@ -138,12 +200,19 @@ def detect_indicators(text: str, normalised: str | None = None) -> list[Evidence
     found: list[Evidence] = []
     for rule in RULES + REASSURING_RULES:
         hit = None
+        suppressed = False
         # Negatable rules only run on the raw text: normalisation strips sentence
         # punctuation, which would let "OTP for login. Do not share" match across sentences.
         candidates = (text,) if rule.negatable else (text, normalised or "")
         for candidate in candidates:
+            if suppressed:  # every raw match was inside a warning; don't re-find it in the normalised text
+                break
             for m in rule.pattern.finditer(candidate):
                 if rule.negatable and (_negated(candidate, m.start()) or _NEGATION_INSIDE.search(m.group(0))):
+                    continue
+                # Tactics quoted inside a warning about scammers describe the scam; they don't request anything.
+                if rule.weight > 0 and candidate is text and _in_warning(text, m.start()):
+                    suppressed = True
                     continue
                 hit = (candidate, m)
                 break

@@ -15,7 +15,7 @@
     "name": "Informational notice",
     "status": 200,
     "risk_level": "LOW",
-    "risk_score": 5,
+    "risk_score": 3,
     "findings": [],
     "error": null
   },
@@ -320,7 +320,7 @@
     "name": "Screenshot: normal chat",
     "status": 200,
     "risk_level": "LOW",
-    "risk_score": 2,
+    "risk_score": 0,
     "findings": [],
     "error": null
   },

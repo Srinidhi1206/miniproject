@@ -29,7 +29,7 @@ from datetime import datetime, timezone
 from PIL import Image
 
 from app.core.errors import SentinelError
-from app.ml.text.indicators import detect_indicators
+from app.ml.text.indicators import detect_indicators, has_call_to_action
 from app.ml.text.model import ModelUnavailable, get_text_detector
 from app.ml.text.preprocess import extract_urls, normalise
 from app.ml.url.analyzer import analyze_url
@@ -287,18 +287,33 @@ class SentinelAgent:
             model_out = None
             ctx.limitations.append("The text ML model is not loaded; the verdict relies on rule-based indicators only.")
         evidence = detect_indicators(text, normalise(text))
+        actionable = has_call_to_action(text)
+        corroborated = risk.is_corroborated(evidence, actionable)
         if model_out and model_out.probability >= 0.8:
-            evidence.append(Evidence(
-                code="TEXT_MODEL_MATCH", label="Wording closely matches known scam messages", severity="high", weight=0,
-                source="text_model",
-                # Plain language for users; the probability is shown in the technical details.
-                detail="Its overall wording is very similar to scam messages SENTINEL learned from thousands of "
-                       "real, labelled examples.",
-            ))
+            if corroborated:
+                evidence.append(Evidence(
+                    code="TEXT_MODEL_MATCH", label="Wording closely matches known scam messages", severity="high",
+                    weight=0, source="text_model",
+                    # Plain language for users; the probability is shown in the technical details.
+                    detail="Its overall wording is very similar to scam messages SENTINEL learned from thousands of "
+                           "real, labelled examples.",
+                ))
+            else:
+                evidence.append(Evidence(
+                    code="TEXT_MODEL_MATCH", label="Wording resembles some known scam messages", severity="medium",
+                    weight=0, source="text_model",
+                    detail="Its style is similar to scam messages SENTINEL has learned from, but it contains no specific "
+                           "scam tactic and doesn't ask you to click, call, reply or pay. On its own this is a "
+                           "caution, not proof.",
+                ))
+        if model_out and not corroborated and model_out.probability >= 0.5:
+            ctx.limitations.append("No specific scam tactic was found and the message doesn't ask you to act, so "
+                                   "SENTINEL can't confirm whether it is genuine. If unsure, check with the sender "
+                                   "through their official app, website or customer-care number.")
         if len(text) < 25:
             ctx.limitations.append("The message is very short, so there is less for the analysis to go on.")
         subject = make_preview(text, 80)
-        comp = risk.score_text(subject, model_out, evidence)
+        comp = risk.score_text(subject, model_out, evidence, actionable=actionable)
         ctx.components.append(comp)
         note = f"P(scam)={model_out.probability:.2f}" if model_out else "rules only"
         ctx.record("text_classifier", "analyze", "Checking message for scam patterns", t,

@@ -113,3 +113,34 @@ would add minutes and memory pressure for no benefit.
 up to ~1 min), the free database expires after 30 days, and report screenshots
 on local disk are not persistent. The Vercel build refuses to run without a
 non-localhost `NEXT_PUBLIC_API_URL`, so a missing setting can't silently ship.
+
+## ADR-014 — Text model similarity needs corroboration to reach HIGH
+**Context.** Benign notices were scored HIGH. A renewal reminder ("Dear Customer,
+your Sun Direct 82141058287 expires on 2026-10-06…") got P(scam)=0.99 because its
+subscriber ID is tokenised as a phone number and its date as numbers, both
+common in the SMS-spam training data. At 70 × P the model alone crossed the HIGH
+threshold with no tactic found. Warnings that *describe* scams ("Beware of
+fraudsters asking you to scan a QR code to receive money") triggered critical
+tactic rules.
+**Decision.** (1) If a text has no medium-or-stronger tactic and no call to
+action (no link to a non-official domain, no un-negated click / call / reply /
+pay / scan instruction), the model weight is 45 instead of 70, so it cannot reach
+HIGH alone. The result is MEDIUM at most, with a limitation telling the user it
+can't be confirmed either way. (2) Tactic rules ignore a tactic only when it is
+the object of a describing verb whose subject is the scammer ("fraudsters asking
+you to scan …"). A bare "Be alert:" or "Fraudsters may target you; share the OTP"
+still counts, because scammers write those too. (3) A plain expiry date is not
+an account threat (KYC "expiry" still is). (4) Safety advice and advisories ("do
+not scan … unknown sources", "beware of", "report to 1930") are reassuring
+signals. (5) Negation no longer reaches across a comma, so "Don't worry, just
+share the OTP" is a request (it scored LOW before this change).
+**Why not a blanket cap on model-only verdicts?** 14 of 103 curated scams reach
+HIGH with no named tactic (e.g. "Your account is limited. Log in to restore
+access"). All of them ask the reader to act, which is what the corroboration
+test checks. Measured impact: curated scams 103/103 HIGH+ (unchanged), system
+evaluation unchanged on all four labelled sets, 25/25 scenario review.
+**Consequences.** Full-agent comparison on all 5,816 dataset messages: curated
+scams unchanged (86 CRITICAL, 17 HIGH); no legitimate message moved up a band;
+42 of 747 UCI spam messages with no tactic and no call to action (jokes, news,
+premium-SMS receipts) moved from HIGH to MEDIUM, none to LOW. Regression tests:
+`backend/tests/test_calibration.py`.

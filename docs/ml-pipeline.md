@@ -163,6 +163,7 @@ Browsing lookups (API key) send only the URL string; if unset, results say
 
 ```
 TEXT component = 70 × P_text(scam)     + clamp(Σ rule weights, −15, +30)
+                 (45 × P instead when uncorroborated: no medium+ tactic AND no call to action)
 URL  component = 55 × P_url(phishing)  + clamp(Σ rule weights, −45, +45)
 UPI  component = 20 (baseline)         + Σ rule weights
 

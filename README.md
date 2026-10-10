@@ -76,7 +76,7 @@ models and deterministic rules. Full details: [`docs/architecture.md`](docs/arch
 | ML | scikit-learn, pandas, NumPy, joblib |
 | Vision | OpenCV (QR), RapidOCR / ONNX Runtime (OCR), Pillow |
 | RAG | FAISS, LSA embeddings (TF-IDF + SVD) · optional Anthropic Claude |
-| Testing | pytest (83 tests), Vitest + Testing Library, Playwright |
+| Testing | pytest (130 tests), Vitest + Testing Library, Playwright |
 
 ## 5. Folder structure
 
@@ -211,7 +211,7 @@ docker compose up --build
   char n-grams + lexical features → Logistic Regression, combined with
   transparent rules. On 500 unseen popular domains the full pipeline raises
   **0.6 % false HIGH alarms**; it warns on or flags **84 %** of phishing URLs.
-* **Risk engine** — `text = 70·P + rules`, `url = 55·P + rules`, final = max +
+* **Risk engine** — `text = 70·P + rules` (45·P when the message has no tactic and no call to action), `url = 55·P + rules`, final = max +
   corroboration, fixed bands. Every result includes its own breakdown.
 
 Details, rule catalogue, dataset-bias handling and limitations:
@@ -257,7 +257,7 @@ GET  /api/health
 ## 15. Testing
 
 ```bash
-cd backend && pytest                    # 83 tests: rules, models, risk engine, RAG, API incl. OCR/QR, prod config
+cd backend && pytest                    # 130 tests: rules, models, risk engine, RAG, API incl. OCR/QR, prod config, FP calibration
 cd frontend && npm test                 # 15 Vitest tests: stream parsing, errors, risk UI, validation, scanner
 cd frontend && npm run test:e2e         # 10 Playwright tests (desktop + mobile), needs both servers running
 python scripts/evaluate_pipeline.py     # system-level evaluation on labelled sets
