@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { Buffer } from "node:buffer";
 
+import { localOnlySkipReason } from "./local-only";
+
 // The MVP definition of done, as a test: no login → paste → analyze →
 // live progress → score, reasons, actions → analyze another.
 
@@ -49,7 +51,10 @@ test("QR upload with no QR code gives a helpful error", async ({ page }) => {
   await expect(page.getByRole("alert").filter({ hasText: /couldn't detect a QR code/ })).toBeVisible();
 });
 
-test("report a scam returns a report ID", async ({ page }) => {
+test("report a scam returns a report ID", async ({ page, baseURL }) => {
+  // Submits a real report: never against a live site (it would appear on the public scam map).
+  const skipReason = localOnlySkipReason(baseURL);
+  test.skip(skipReason !== null, skipReason ?? "");
   await page.goto("/report?type=job");
   await page.getByLabel(/What happened/).fill("Offered a task job on Telegram, then asked to deposit money to unlock tasks.");
   await page.getByLabel(/Approximate location/).selectOption("pune");
