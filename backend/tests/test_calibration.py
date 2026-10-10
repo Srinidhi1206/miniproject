@@ -76,7 +76,9 @@ def test_uncertain_reminder_is_medium_with_honest_wording():
     assert r.risk_level.value == "MEDIUM" and r.classification.value == "SUSPICIOUS"
     model_match = next(f for f in r.findings if f.code == "TEXT_MODEL_MATCH")
     assert model_match.severity == "medium" and "not proof" in model_match.detail
-    assert any("can't confirm whether it is genuine" in lim for lim in r.limitations)
+    # The uncertainty is explained in the summary (not repeated as a limitation): what can't be confirmed, and how.
+    assert "what can't be confirmed is who really sent it" in r.explanation.summary
+    assert not any("can't confirm" in lim for lim in r.limitations)
     text_comp = next(c for c in r.breakdown.components if c.component == "text")
     assert any("model weight 45" in o for o in text_comp.overrides)
 

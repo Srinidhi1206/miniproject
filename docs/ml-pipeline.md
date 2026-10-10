@@ -204,11 +204,21 @@ confidence in its own label, `max(p, 1−p)`.
   protocol allows a sentence-transformer later.
 * **Index**: FAISS `IndexFlatIP` (cosine), NumPy fallback.
 * **Retrieval**: query built from the *found evidence* labels; results re-ranked
-  with +0.12 per matching evidence tag; generic "warning signs / what to do"
-  sections down-weighted; max two chunks per guide.
+  with +0.12 per matching evidence tag; max two chunks per guide. For result
+  explanations only guide *sections* written about a found tactic are eligible
+  (`app/rag/section_tags.py`), there is no similarity fallback, and a passage
+  illustrated with a brand that isn't in the user's content is skipped. A
+  renewal reminder once showed an SBI link example; now it gets no passage.
 * **Generation**:
-  * default `template+rag`: verdict sentence with the real numbers, each top
-    finding's rationale, plus the lead paragraph of retrieved passages;
+  * default `template+rag`: a verdict sentence naming the strongest warning
+    signs actually found (MEDIUM results say what is uncertain and how to
+    verify; LOW says nothing was found, not that it is safe), lines specific to
+    this result (its link, QR destination or UPI request), then the lead
+    paragraph of up to two relevant passages;
+  * advice (`app/risk/recommendations.py`) comes from the evidence codes plus the
+    *scenario* the content is about (renewal, KYC, QR link, UPI QR;
+    `app/rag/scenarios.py`). Scenarios choose wording only and never add
+    evidence or points;
   * optional `llm:<model>+rag` (`LLM_PROVIDER=anthropic`): Claude receives the
     fixed verdict, the evidence and the passages and returns a schema-validated
     `{summary, why_it_matters[]}`. It cannot change the score or level; on any

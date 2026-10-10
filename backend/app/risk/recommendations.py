@@ -42,7 +42,20 @@ _CATALOG: dict[str, Recommendation] = {r.id: r for r in [
                    detail="No automated check is perfect. If anything later asks for money, codes or urgency — stop and verify."),
     Recommendation(id="pay_only_if_intended", priority="important", title="Only scan to pay someone you intended to pay",
                    detail="Check the payee name and amount on your UPI app's confirmation screen before entering your PIN."),
+    # Scenario-specific advice (see rag/scenarios.py): chosen from what the content is about, never from guesses.
+    Recommendation(id="renew_official", priority="important", title="Renew only through the official app or website",
+                   detail="Open the provider's app or type its website address yourself, or call the number on your bill "
+                          "or device. Don't use a number or link sent in a message."),
+    Recommendation(id="kyc_official", priority="important", title="Do KYC only in your bank's app or branch",
+                   detail="Banks never complete KYC through a link, a call or a message. Never send documents, OTPs or "
+                          "passwords to 'update KYC'."),
+    Recommendation(id="qr_check_destination", priority="important", title="Don't open where this QR code leads",
+                   detail="SENTINEL checked the link inside the QR code without opening it. If you need the service, go to "
+                          "the organisation's official website or app yourself."),
 ]}
+
+# Scenario advice that supersedes the generic "verify through an official channel" (it says the same, more precisely).
+_SCENARIO_RECS = {"renewal": "renew_official", "kyc": "kyc_official"}
 
 _BY_CODE: dict[str, list[str]] = {
     "OTP_REQUEST": ["no_otp"],
@@ -76,23 +89,36 @@ _BY_CODE: dict[str, list[str]] = {
 _PRIORITY = {"critical": 0, "important": 1, "general": 2}
 
 
-def recommend(level: RiskLevel, findings: list[Evidence], has_risky_url: bool) -> list[Recommendation]:
+def recommend(level: RiskLevel, findings: list[Evidence], has_risky_url: bool,
+              scenarios: set[str] | None = None) -> list[Recommendation]:
+    """`scenarios` (what the content is about, see rag/scenarios.py) only selects more specific advice."""
+    scenarios = scenarios or set()
     ids: list[str] = []
-    for e in sorted(findings, key=lambda e: -e.weight):
-        for rid in _BY_CODE.get(e.code, []):
-            if rid not in ids:
-                ids.append(rid)
-    if has_risky_url and "no_click" not in ids:
-        ids.append("no_click")
+
+    def add(*rids: str) -> None:
+        ids.extend(r for r in rids if r not in ids)
+
+    if level != RiskLevel.LOW:  # protective "don't ..." steps only when there is something to protect against
+        for e in sorted(findings, key=lambda e: -e.weight):
+            add(*_BY_CODE.get(e.code, []))
+        if has_risky_url:
+            add("no_click")
+        if "qr_link" in scenarios and has_risky_url:
+            add("qr_check_destination")
+    elif any(e.code in ("UPI_PAYMENT_QR", "UPI_PRESET_AMOUNT") for e in findings):
+        add("pay_only_if_intended")  # a genuine payment QR still deserves a payee check
+    add(*(_SCENARIO_RECS[s] for s in ("kyc", "renewal") if s in scenarios))
+
+    tactics = [e for e in findings if e.weight > 0 and e.severity in ("medium", "high", "critical")]
     if level in (RiskLevel.HIGH, RiskLevel.CRITICAL):
-        for rid in ("dont_reply", "report", "already_paid"):
-            if rid not in ids:
-                ids.append(rid)
+        add("dont_reply", "report", "already_paid")
     elif level == RiskLevel.MEDIUM:
-        for rid in ("verify_official", "report"):
-            if rid not in ids:
-                ids.append(rid)
+        add("verify_official")
+        if tactics:  # reporting a probably-genuine reminder with no tactic would be poor advice
+            add("report")
     else:
-        ids.append("stay_alert")
+        add("stay_alert")
+    if any(rid in ids for rid in _SCENARIO_RECS.values()):
+        ids = [r for r in ids if r != "verify_official"]
     recs = [_CATALOG[i] for i in ids]
     return sorted(recs, key=lambda r: _PRIORITY[r.priority])[:7]

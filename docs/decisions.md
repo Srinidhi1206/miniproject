@@ -144,3 +144,22 @@ scams unchanged (86 CRITICAL, 17 HIGH); no legitimate message moved up a band;
 42 of 747 UCI spam messages with no tactic and no call to action (jokes, news,
 premium-SMS receipts) moved from HIGH to MEDIUM, none to LOW. Regression tests:
 `backend/tests/test_calibration.py`.
+
+## ADR-015 — Explanations use only guide sections about the evidence found
+**Context.** "Why this matters" passages were retrieved from whole guides tagged
+with any found code, with a similarity fallback when nothing matched. A Sun
+Direct renewal reminder (no link) was shown the phishing guide's SBI
+link-checking example; an OTP scam got password-reuse advice; a job-fee scam
+got UPI-PIN guidance. Summaries never named what was actually found.
+**Decision.** (1) A code-side map (`app/rag/section_tags.py`) lists the tactics
+each guide *section* explains; only those sections are eligible, with no
+similarity fallback. A passage illustrated with a brand absent from the user's
+content is skipped. Guide files and the Safety Center are unchanged.
+(2) Summaries name the strongest warning signs; MEDIUM says what is uncertain
+and how to verify; LOW says nothing was found, not that it is safe.
+(3) Advice also follows the *scenario* (renewal, KYC, QR link, UPI QR;
+`app/rag/scenarios.py`), which chooses wording only and never adds evidence.
+LOW results get no protective "don't …" steps.
+**Consequences.** Scores and levels are unchanged (0 of 5,816 dataset messages
+changed). Some results show fewer passages, and "Why this matters" is filled
+with lines specific to the result instead. Tests: `backend/tests/test_explanations.py`.

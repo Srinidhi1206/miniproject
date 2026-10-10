@@ -35,10 +35,11 @@ from app.ml.text.preprocess import extract_urls, normalise
 from app.ml.url.analyzer import analyze_url
 from app.ml.url.parsing import parse_url
 from app.rag.explainer import explain
+from app.rag.scenarios import detect_scenarios
 from app.risk import engine as risk
 from app.risk.recommendations import recommend
 from app.schemas.analysis import (
-    AgentStep, AnalysisResult, Channel, ComponentScore, Evidence, ExtractedContent, InputType,
+    AgentStep, AnalysisResult, Channel, ComponentScore, Evidence, ExtractedContent, InputType, RiskLevel,
 )
 from app.services import reputation
 from app.services.ocr import OCRUnavailable, get_ocr_engine
@@ -160,14 +161,24 @@ class SentinelAgent:
 
         all_ev = [e for c in breakdown.components for e in c.evidence]
         findings, reassurances, context = self._split_evidence(all_ev)
+        if level == RiskLevel.LOW:
+            # "Wording/name resembles scams" notes carry no points; on a LOW result they would contradict
+            # "No warning signs found". The model outputs stay in the technical details.
+            findings = [e for e in findings if e.code not in ("TEXT_MODEL_MATCH", "URL_MODEL_MATCH")]
         has_risky_url = any(c.component == "url" and c.score >= 60 for c in breakdown.components)
+        # Advice and wording follow what was actually analysed: the user's text, the OCR text, the decoded
+        # QR payload or the link itself. Nothing here is ever opened or fetched.
+        content = " ".join(filter(None, [ctx.extracted.text, ctx.extracted.qr_payload, *ctx.extracted.urls]))
+        scenarios = detect_scenarios(ctx.extracted.text or (ctx.extracted.qr_payload
+                                                            if ctx.extracted.qr_payload_kind == "text" else None),
+                                     ctx.extracted.qr_payload_kind)
 
         ctx.stage("explain")
         t = time.perf_counter()
         explanation = explain(input_type=input_type, channel=channel.value if channel else None, level=level,
                               score=breakdown.final_score, components=breakdown.components,
-                              findings=findings, reassurances=reassurances)
-        recs = recommend(level, findings + context, has_risky_url)
+                              findings=findings, reassurances=reassurances, scenarios=scenarios, content=content)
+        recs = recommend(level, findings + context, has_risky_url, scenarios)
         ctx.record("explanation_service", "explain", "Preparing explanation", t,
                    note=f"{explanation.generated_by}; {len(explanation.sources)} guidance sources")
 
@@ -306,10 +317,6 @@ class SentinelAgent:
                            "scam tactic and doesn't ask you to click, call, reply or pay. On its own this is a "
                            "caution, not proof.",
                 ))
-        if model_out and not corroborated and model_out.probability >= 0.5:
-            ctx.limitations.append("No specific scam tactic was found and the message doesn't ask you to act, so "
-                                   "SENTINEL can't confirm whether it is genuine. If unsure, check with the sender "
-                                   "through their official app, website or customer-care number.")
         if len(text) < 25:
             ctx.limitations.append("The message is very short, so there is less for the analysis to go on.")
         subject = make_preview(text, 80)

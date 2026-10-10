@@ -76,7 +76,7 @@ models and deterministic rules. Full details: [`docs/architecture.md`](docs/arch
 | ML | scikit-learn, pandas, NumPy, joblib |
 | Vision | OpenCV (QR), RapidOCR / ONNX Runtime (OCR), Pillow |
 | RAG | FAISS, LSA embeddings (TF-IDF + SVD) · optional Anthropic Claude |
-| Testing | pytest (130 tests), Vitest + Testing Library, Playwright |
+| Testing | pytest (154 tests), Vitest + Testing Library, Playwright |
 
 ## 5. Folder structure
 
@@ -220,8 +220,10 @@ Details, rule catalogue, dataset-bias handling and limitations:
 ## 12. RAG pipeline
 
 12 markdown guides → 51 section chunks → LSA embeddings → FAISS. The retrieval
-query is built from the **evidence actually found**, re-ranked by evidence tags.
-Explanations are composed from findings + retrieved passages; if
+query is built from the **evidence actually found**, and only guide sections written
+about a found tactic can be shown (no similarity fallback, no other brands'
+examples). Explanations name the real warning signs, and advice follows the
+scenario (renewal, KYC, QR link, UPI); if
 `LLM_PROVIDER=anthropic`, Claude rewrites them under a fixed verdict and a
 validated output schema, falling back to the template on any error. The same
 guides power the Safety Center.
@@ -257,7 +259,7 @@ GET  /api/health
 ## 15. Testing
 
 ```bash
-cd backend && pytest                    # 130 tests: rules, models, risk engine, RAG, API incl. OCR/QR, prod config, FP calibration
+cd backend && pytest                    # 154 tests: rules, models, risk engine, RAG, API incl. OCR/QR, prod config, FP calibration, explanations
 cd frontend && npm test                 # 15 Vitest tests: stream parsing, errors, risk UI, validation, scanner
 cd frontend && npm run test:e2e         # 10 Playwright tests (desktop + mobile), needs both servers running
 python scripts/evaluate_pipeline.py     # system-level evaluation on labelled sets

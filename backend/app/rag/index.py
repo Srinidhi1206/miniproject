@@ -21,6 +21,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import normalize
 
 from app.rag.knowledge import KnowledgeChunk, load_knowledge
+from app.rag.section_tags import SECTION_TAGS
 
 log = logging.getLogger("sentinel.rag")
 
@@ -97,13 +98,14 @@ def retrieve(query: str, evidence_codes: list[str], k: int = 4, tag_boost: float
              require_tag_match: bool = False) -> list[tuple[KnowledgeChunk, float]]:
     """Semantic search, re-ranked with a boost for chunks tagged with the found evidence codes.
 
-    With `require_tag_match`, only chunks from guides tagged with a found evidence
-    code are eligible (falls back to similarity when no guide matches).
+    With `require_tag_match` (used for result explanations), only *sections* mapped
+    to a found evidence code in rag/section_tags.py are eligible, and nothing is
+    returned when none match: there is no similarity fallback.
     Sections that are lists of generic 'warning signs' / 'what to do' are
-    down-weighted for explanations — the result page shows actions separately.
+    down-weighted — the result page shows actions separately.
     """
     index = get_index()
-    candidates = index.search(query, k=min(24, len(index.chunks)))
+    candidates = index.search(query, k=len(index.chunks) if require_tag_match else min(24, len(index.chunks)))
     codes = set(evidence_codes)
     rescored = []
     for chunk, score in candidates:
@@ -111,11 +113,11 @@ def retrieve(query: str, evidence_codes: list[str], k: int = 4, tag_boost: float
         if chunk.section.lower().startswith(("warning signs", "what to do")):
             s -= 0.25
         rescored.append((chunk, s))
-    if require_tag_match and codes:
-        # Ground guidance in the evidence: only guides written about a found tactic,
-        # unless none match (then fall back to pure similarity).
-        tagged = [p for p in rescored if codes.intersection(p[0].tags)]
-        rescored = tagged or rescored
+    if require_tag_match:
+        # Ground guidance in the evidence: only *sections* written about a found tactic
+        # (see rag/section_tags.py). No similarity fallback: an unrelated passage is worse
+        # than none (a renewal reminder was once shown an SBI link-checking example).
+        rescored = [p for p in rescored if codes.intersection(SECTION_TAGS.get((p[0].slug, p[0].section), ()))]
     rescored.sort(key=lambda p: -p[1])
     out: list[tuple[KnowledgeChunk, float]] = []
     per_doc: dict[str, int] = {}
